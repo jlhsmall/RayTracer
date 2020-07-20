@@ -5,8 +5,8 @@ use indicatif::ProgressBar;
 
 pub use vec3::Vec3;
 fn main() {
-    let x=Vec3::new(1.0, 0.0, -1.0) * Vec3::ones();
-    println!("{}",x);
+    let x = Vec3::new(1.0, 0.0, -1.0) * Vec3::ones();
+    println!("{}", x);
     let x = Vec3::new(1.0, 1.0, 1.0);
     println!("{:?}", x);
 
@@ -17,7 +17,7 @@ fn main() {
         for y in 0..255 {
             let pixel = img.get_pixel_mut(x, y);
             let color = x as u8;
-            let color2=y as u8;
+            let color2 = y as u8;
             *pixel = image::Rgb([color2, color2, 0]);
         }
         bar.inc(1);

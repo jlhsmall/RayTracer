@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, Neg};
+use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vec3 {
     pub x: f64,
@@ -42,7 +42,7 @@ impl Vec3 {
     }
     pub fn unit(&self) -> Self {
         let len = self.length();
-        if len==0.0{
+        if len == 0.0 {
             panic!("div 0");
         }
         Self {
@@ -139,7 +139,7 @@ impl SubAssign<f64> for Vec3 {
 impl Mul for Vec3 {
     type Output = f64;
     fn mul(self, other: Self) -> f64 {
-        self.x * other.x + self.y * other.y +self.z * other.z
+        self.x * other.x + self.y * other.y + self.z * other.z
     }
 }
 
@@ -218,7 +218,6 @@ mod tests {
         )
     }
 
-
     #[test]
     fn test_add_assign_f64() {
         let mut x = Vec3::new(1.0, 0.0, -1.0);
@@ -252,7 +251,6 @@ mod tests {
         x -= 1.0;
         assert_eq!(x, Vec3::new(0.0, -1.0, -2.0))
     }
-
 
     #[test]
     fn test_mul() {
@@ -301,7 +299,6 @@ mod tests {
     fn test_squared_length() {
         assert_eq!(Vec3::new(1.0, 2.0, 3.0).squared_length(), 14.0 as f64);
     }
-
 
     #[test]
     fn test_length() {
