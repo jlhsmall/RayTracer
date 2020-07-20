@@ -11,7 +11,7 @@ fn main() {
     println!("{:?}", x);
 
     let mut img: RgbImage = ImageBuffer::new(1024, 512);
-    let bar = ProgressBar::new(1024);
+    let ba = ProgressBar::new(1024);
 
     for x in 0..255 {
         for y in 0..255 {
@@ -20,9 +20,9 @@ fn main() {
             let color2 = y as u8;
             *pixel = image::Rgb([color, color2, 0]);
         }
-        bar.inc(1);
+        ba.inc(1);
     }
 
     img.save("output/test.png").unwrap();
-    bar.finish();
+    ba.finish();
 }
