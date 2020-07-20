@@ -18,6 +18,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         name: Setup Cargo Toolchain 🛎️
         with:
+          toolchain: stable
           components: rustfmt, clippy
       - uses: actions-rs/cargo@v1
         name: Running Tests 🚀
@@ -45,6 +46,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         name: Build 🔧
         with:
+          toolchain: stable
           command: build
           args: --release --all-features
       - uses: actions-rs/cargo@v1
