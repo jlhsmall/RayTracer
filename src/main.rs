@@ -18,7 +18,7 @@ fn main() {
             let pixel = img.get_pixel_mut(x, y);
             let color = x as u8;
             let color2 = y as u8;
-            *pixel = image::Rgb([color2, color2, 0]);
+            *pixel = image::Rgb([color, color2, 0]);
         }
         bar.inc(1);
     }
