@@ -8,8 +8,11 @@ pub use ray::Ray;
 pub use sphere::Sphere;
 pub use vec3::Vec3;
 fn get_color(r: Ray) -> Vec3 {
-    if r.hit_sphere(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)) {
-        return Vec3::new(1.0, 0.0, 0.0);
+    let s = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
+    let t = r.hit_sphere(s);
+    if t > 0.0 {
+        let n = (r.at(t) - s.centre).unit();
+        return Vec3::new(n.x + 1.0, n.y + 1.0, n.z + 1.0) / 2.0;
     }
     let v1 = Vec3::new(0.5, 0.7, 1.0);
     let v2 = Vec3::new(1.0, 1.0, 1.0);
