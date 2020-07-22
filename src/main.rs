@@ -42,7 +42,7 @@ fn main() {
                 lower_left_corner
                     + Vec3::new(
                         (x as f64) * viewport_width / (image_width as f64),
-                        (y as f64) * viewport_height / (image_height as f64),
+                        ((image_height-y) as f64) * viewport_height / (image_height as f64),
                         0.0,
                     ),
             );
