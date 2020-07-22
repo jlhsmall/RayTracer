@@ -17,7 +17,7 @@ fn get_color(r: Ray) -> Vec3 {
     let v1 = Vec3::new(0.5, 0.7, 1.0);
     let v2 = Vec3::new(1.0, 1.0, 1.0);
     let t = (r.dir.y / r.dir.length() + 1.0) / 2.0;
-    v2 * t + v1 * (1.0 - t)
+    v1 * t + v2 * (1.0 - t)
 }
 fn main() {
     //blue to white gradient
@@ -34,15 +34,15 @@ fn main() {
     let vertical = Vec3::new(0.0, viewport_height, 0.0);
     let lower_left_corner =
         origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
-    for x in 0..image_width {
-        for y in 0..image_height {
-            let pixel = img.get_pixel_mut(x, image_height-y-1);
+    for y in 0..image_height {
+        for x in 0..image_width {
+            let pixel = img.get_pixel_mut(x, image_height - y - 1);
             let r = Ray::new(
                 origin,
                 lower_left_corner
                     + Vec3::new(
                         (x as f64) * viewport_width / (image_width as f64),
-                        ((image_height-y-1) as f64) * viewport_height / (image_height as f64),
+                        (y as f64) * viewport_height / (image_height as f64),
                         0.0,
                     ),
             );
