@@ -36,13 +36,13 @@ fn main() {
         origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
     for x in 0..image_width {
         for y in 0..image_height {
-            let pixel = img.get_pixel_mut(x, y);
+            let pixel = img.get_pixel_mut(x, image_height-y-1);
             let r = Ray::new(
                 origin,
                 lower_left_corner
                     + Vec3::new(
                         (x as f64) * viewport_width / (image_width as f64),
-                        ((image_height-y) as f64) * viewport_height / (image_height as f64),
+                        ((image_height-y-1) as f64) * viewport_height / (image_height as f64),
                         0.0,
                     ),
             );
