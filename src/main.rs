@@ -1,17 +1,23 @@
 mod ray;
+mod sphere;
 #[allow(clippy::float_cmp)]
 mod vec3;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 pub use ray::Ray;
+pub use sphere::Sphere;
 pub use vec3::Vec3;
 fn get_color(r: Ray) -> Vec3 {
+    if r.hit_sphere(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)) {
+        return Vec3::new(1.0, 0.0, 0.0);
+    }
     let v1 = Vec3::new(0.5, 0.7, 1.0);
     let v2 = Vec3::new(1.0, 1.0, 1.0);
     let t = (r.dir.y / r.dir.length() + 1.0) / 2.0;
-    (v2 * t + v1 * (1.0 - t)) * 255.0
+    v2 * t + v1 * (1.0 - t)
 }
 fn main() {
+    //blue to white gradient
     let aspect_ratio = 16.0 / 9.0;
     let image_width: u32 = 400;
     let image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
@@ -37,12 +43,12 @@ fn main() {
                         0.0,
                     ),
             );
-            let color = get_color(r);
+            let color = get_color(r) * 255.0;
             *pixel = image::Rgb([color.x as u8, color.y as u8, color.z as u8]);
         }
         ba.inc(1);
     }
 
-    img.save("output/blue-to-white gradient.png").unwrap();
+    img.save("output/red sphere.png").unwrap();
     ba.finish();
 }
