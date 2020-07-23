@@ -1,23 +1,27 @@
+mod object;
 mod ray;
 mod sphere;
 #[allow(clippy::float_cmp)]
 mod vec3;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
+pub use object::HitRecord;
+pub use object::Hittable;
 pub use ray::Ray;
 pub use sphere::Sphere;
 pub use vec3::Vec3;
 fn get_color(r: Ray) -> Vec3 {
     let s = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
-    let t = r.hit_sphere(s);
-    if t > 0.0 {
-        let n = (r.at(t) - s.centre).unit();
-        return Vec3::new(n.x + 1.0, n.y + 1.0, n.z + 1.0) / 2.0;
+    let opt = s.hit(r, 0.0, 2.0);
+    match opt {
+        Option::Some(rec) => (rec.normal + Vec3::ones()) / 2.0,
+        Option::None => {
+            let v1 = Vec3::new(0.5, 0.7, 1.0);
+            let v2 = Vec3::new(1.0, 1.0, 1.0);
+            let t = (r.dir.y / r.dir.length() + 1.0) / 2.0;
+            v1 * t + v2 * (1.0 - t)
+        }
     }
-    let v1 = Vec3::new(0.5, 0.7, 1.0);
-    let v2 = Vec3::new(1.0, 1.0, 1.0);
-    let t = (r.dir.y / r.dir.length() + 1.0) / 2.0;
-    v1 * t + v2 * (1.0 - t)
 }
 fn main() {
     //blue to white gradient
