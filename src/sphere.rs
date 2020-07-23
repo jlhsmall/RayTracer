@@ -24,12 +24,12 @@ impl Hittable for Sphere {
         let t1 = (-co_b - delta.sqrt()) / co_a / 2.0;
         if t1 >= tmin && t1 <= tmax {
             let p = r.at(t1);
-            return Option::Some(HitRecord::new(p, (p - self.centre).unit(), t1));
+            return Option::Some(HitRecord::new(r, p, (p - self.centre).unit(), t1));
         }
         let t2 = (-co_b + delta.sqrt()) / co_a / 2.0;
         if t2 >= tmin && t2 <= tmax {
             let p = r.at(t2);
-            return Option::Some(HitRecord::new(p, (p - self.centre).unit(), t2));
+            return Option::Some(HitRecord::new(r, p, (p - self.centre).unit(), t2));
         }
         Option::None
     }
