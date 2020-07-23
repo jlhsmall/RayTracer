@@ -16,17 +16,17 @@ impl Hittable for Sphere {
     fn hit(&self, r: Ray, tmin: f64, tmax: f64) -> Option<HitRecord> {
         let co_a = r.dir.squared_length();
         let co_c = (r.orig - self.centre).squared_length() - self.radius * self.radius;
-        let co_b = (r.orig - self.centre) * r.dir * 2.0;
-        let delta = co_b * co_b - 4.0 * co_a * co_c;
-        if delta < 0.0 {
+        let co_bd2 = (r.orig - self.centre) * r.dir;
+        let deltad4 = co_bd2 * co_bd2 - co_a * co_c;
+        if deltad4 < 0.0 {
             return Option::None;
         }
-        let t1 = (-co_b - delta.sqrt()) / co_a / 2.0;
+        let t1 = (-co_bd2 - deltad4.sqrt()) / co_a;
         if t1 >= tmin && t1 <= tmax {
             let p = r.at(t1);
             return Option::Some(HitRecord::new(r, p, (p - self.centre).unit(), t1));
         }
-        let t2 = (-co_b + delta.sqrt()) / co_a / 2.0;
+        let t2 = (-co_bd2 + deltad4.sqrt()) / co_a;
         if t2 >= tmin && t2 <= tmax {
             let p = r.at(t2);
             return Option::Some(HitRecord::new(r, p, (p - self.centre).unit(), t2));

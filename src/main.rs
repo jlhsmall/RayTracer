@@ -1,3 +1,4 @@
+extern crate rand;
 mod hittablelist;
 mod object;
 mod ray;
@@ -6,18 +7,27 @@ mod sphere;
 mod vec3;
 pub use hittablelist::HittableList;
 use image::{ImageBuffer, RgbImage};
-use indicatif::ProgressBar;
+//use indicatif::ProgressBar;
 pub use object::HitRecord;
 pub use object::Hittable;
 pub use ray::Ray;
 pub use sphere::Sphere;
-pub use std::f64::consts::PI;
 pub use vec3::Vec3;
+
+pub use std::f64::consts::PI;
+const INF: f64 = 100000000000000000.0;
+
+//use rand::prelude::*;
 /*fn degree_to_radian(degree:f64)->f64{
     degree*PI/180.0
+}
+fn rand_double(low:f64,high:f64)->f64{
+    let mut rng=rand::thread_rng();
+    let x:f64=rng.gen();
+    x*(high-low)+low
 }*/
 fn get_color(r: Ray, world: &HittableList) -> Vec3 {
-    let opt = world.hit(r, 0.0, 2.0);
+    let opt = world.hit(r, 0.0, INF);
     match opt {
         Option::Some(rec) => (rec.normal + Vec3::ones()) / 2.0,
         Option::None => {
@@ -43,7 +53,7 @@ fn main() {
     let viewport_width = aspect_ratio * viewport_height;
     let focal_length = 1.0;
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
-    let ba = ProgressBar::new(256);
+    //let ba = ProgressBar::new(256);
 
     let origin = Vec3::new(0.0, 0.0, 0.0);
     let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
@@ -58,17 +68,17 @@ fn main() {
                 origin,
                 lower_left_corner
                     + Vec3::new(
-                        (x as f64) * viewport_width / (image_width as f64),
-                        (y as f64) * viewport_height / (image_height as f64),
+                        (x as f64) * viewport_width / ((image_width - 1) as f64),
+                        (y as f64) * viewport_height / ((image_height - 1) as f64),
                         0.0,
                     ),
             );
             let color = get_color(r, &world) * 255.0;
             *pixel = image::Rgb([color.x as u8, color.y as u8, color.z as u8]);
         }
-        ba.inc(1);
+        //ba.inc(1);
     }
 
     img.save("output/red sphere.png").unwrap();
-    ba.finish();
+    //ba.finish();
 }
