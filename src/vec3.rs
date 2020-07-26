@@ -195,14 +195,14 @@ impl Neg for Vec3 {
         }
     }
 }
-pub fn reflect(v:Vec3,n:Vec3)->Vec3{
-    v-n*(v*n)*2.0
+pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+    v - n * (v * n) * 2.0
 }
-pub fn refract(uv:Vec3,n:Vec3,eta_i_over_t:f64)->Vec3{
-    let cos_theta=-uv*n;
-    let r_perp=(uv+n*cos_theta)*eta_i_over_t;
-    let r_para=-n*((1.0-r_perp.squared_length()).abs().sqrt());
-    r_perp+r_para
+pub fn refract(uv: Vec3, n: Vec3, eta_i_over_t: f64) -> Vec3 {
+    let cos_theta = -uv * n;
+    let r_perp = (uv + n * cos_theta) * eta_i_over_t;
+    let r_para = -n * ((1.0 - r_perp.squared_length()).abs().sqrt());
+    r_perp + r_para
 }
 #[cfg(test)]
 mod tests {

@@ -1,8 +1,8 @@
+pub use crate::material::Material;
 pub use crate::object::HitRecord;
 pub use crate::object::Hittable;
 pub use crate::ray::Ray;
 pub use crate::vec3::Vec3;
-pub use crate::material::Material;
 pub use std::sync::Arc;
 pub struct Sphere {
     pub centre: Vec3,
@@ -10,8 +10,12 @@ pub struct Sphere {
     pub mat_ptr: Arc<dyn Material>,
 }
 impl Sphere {
-    pub fn new(centre: Vec3, radius: f64,mat_ptr: Arc<dyn Material>) -> Self {
-        Self { centre, radius,mat_ptr:mat_ptr.clone() }
+    pub fn new(centre: Vec3, radius: f64, mat_ptr: Arc<dyn Material>) -> Self {
+        Self {
+            centre,
+            radius,
+            mat_ptr: mat_ptr.clone(),
+        }
     }
 }
 impl Hittable for Sphere {
@@ -26,12 +30,24 @@ impl Hittable for Sphere {
         let t1 = (-co_bd2 - deltad4.sqrt()) / co_a;
         if t1 >= tmin && t1 <= tmax {
             let p = r.at(t1);
-            return Option::Some(HitRecord::new(r, p, (p - self.centre).unit(), t1,self.mat_ptr.clone()));
+            return Option::Some(HitRecord::new(
+                r,
+                p,
+                (p - self.centre).unit(),
+                t1,
+                self.mat_ptr.clone(),
+            ));
         }
         let t2 = (-co_bd2 + deltad4.sqrt()) / co_a;
         if t2 >= tmin && t2 <= tmax {
             let p = r.at(t2);
-            return Option::Some(HitRecord::new(r, p, (p - self.centre).unit(), t2,self.mat_ptr.clone()));
+            return Option::Some(HitRecord::new(
+                r,
+                p,
+                (p - self.centre).unit(),
+                t2,
+                self.mat_ptr.clone(),
+            ));
         }
         Option::None
     }

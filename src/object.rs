@@ -1,6 +1,6 @@
+pub use crate::material::Material;
 pub use crate::ray::Ray;
 pub use crate::vec3::Vec3;
-pub use crate::material::Material;
 pub use std::sync::Arc;
 #[derive(Clone)]
 pub struct HitRecord {
@@ -11,7 +11,7 @@ pub struct HitRecord {
     pub front_face: bool,
 }
 impl HitRecord {
-    pub fn new(r: Ray, p: Vec3, out_normal: Vec3, t: f64,mat_ptr: Arc<dyn Material>) -> Self {
+    pub fn new(r: Ray, p: Vec3, out_normal: Vec3, t: f64, mat_ptr: Arc<dyn Material>) -> Self {
         let front_face = r.dir * out_normal < 0.0;
         let normal = if front_face { out_normal } else { -out_normal };
         Self {
