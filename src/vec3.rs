@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 pub struct Vec3 {
     pub x: f64,
@@ -52,7 +52,6 @@ impl Vec3 {
         }
     }
 }
-
 impl Add for Vec3 {
     type Output = Self;
 
@@ -176,6 +175,16 @@ impl Div<f64> for Vec3 {
         }
     }
 }
+
+impl DivAssign<f64> for Vec3 {
+    fn div_assign(&mut self, other: f64) {
+        *self = Self {
+            x: self.x / other,
+            y: self.y / other,
+            z: self.z / other,
+        };
+    }
+}
 impl Neg for Vec3 {
     type Output = Self;
     fn neg(self) -> Self {
@@ -185,6 +194,15 @@ impl Neg for Vec3 {
             z: -self.z,
         }
     }
+}
+pub fn reflect(v:Vec3,n:Vec3)->Vec3{
+    v-n*(v*n)*2.0
+}
+pub fn refract(uv:Vec3,n:Vec3,eta_i_over_t:f64)->Vec3{
+    let cos_theta=-uv*n;
+    let r_perp=(uv+n*cos_theta)*eta_i_over_t;
+    let r_para=-n*((1.0-r_perp.squared_length()).abs().sqrt());
+    r_perp+r_para
 }
 #[cfg(test)]
 mod tests {
