@@ -111,7 +111,7 @@ fn main() {
     let aspect_ratio = 3.0 / 2.0;
     let image_width: u32 = 1200;
     let image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
-    let samples_per_pixel: u32 = 500;
+    let samples_per_pixel: u32 = 64;
     let max_depth = 50;
     //world
     let world = random_scene();
