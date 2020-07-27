@@ -27,9 +27,19 @@ pub fn rand_in_unit_sphere() -> Vec3 {
         z = rand_double(-1.0, 1.0);
     }
     Vec3::new(x, y, z)
-} /*
-  pub fn clamp(x:f64,low:f64,high:f64)->f64{
-      if x<low{low}
-      else if x>high{high}
-      else {x}
-  }*/
+}
+pub fn rand_in_unit_disk() -> Vec3 {
+    let mut x: f64 = rand_double(-1.0, 1.0);
+    let mut y: f64 = rand_double(-1.0, 1.0);
+    while x * x + y * y > 1.0 {
+        x = rand_double(-1.0, 1.0);
+        y = rand_double(-1.0, 1.0);
+    }
+    Vec3::new(x, y, 0.0)
+}
+/*
+pub fn clamp(x:f64,low:f64,high:f64)->f64{
+    if x<low{low}
+    else if x>high{high}
+    else {x}
+}*/

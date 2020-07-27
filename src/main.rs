@@ -82,12 +82,19 @@ fn main() {
         Box::new(Sphere::new(Vec3::new(R, 0.0, -1.0), R, mat_right)),
     ]);*/
     //camera
+    let lookfrom = Vec3::new(3.0, 3.0, 2.0);
+    let lookat = Vec3::new(0.0, 0.0, -1.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+    let focus_dist = (lookfrom - lookat).length();
+    let aperture = 2.0;
     let cam = Camera::new(
-        Vec3::new(-2.0, 2.0, 1.0),
-        Vec3::new(0.0, 0.0, -1.0),
-        Vec3::new(0.0, 1.0, 0.0),
+        lookfrom,
+        lookat,
+        vup,
         20.0,
         aspect_ratio,
+        aperture,
+        focus_dist,
     );
     //let ba = ProgressBar::new(256);
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
