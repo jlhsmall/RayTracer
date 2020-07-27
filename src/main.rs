@@ -20,6 +20,7 @@ pub use object::Hittable;
 pub use oneweekend::rand_double;
 pub use oneweekend::rand_unit_vector;
 pub use oneweekend::INF;
+pub use oneweekend::PI;
 pub use ray::Ray;
 pub use sphere::Sphere;
 pub use std::sync::Arc;
@@ -64,11 +65,30 @@ fn main() {
     let world = HittableList::new(vec![
         Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, mat_ground)),
         Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, mat_centre)),
-        Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, mat_left)),
+        Box::new(Sphere::new(
+            Vec3::new(-1.0, 0.0, -1.0),
+            0.5,
+            mat_left.clone(),
+        )),
+        Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.45, mat_left)),
         Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, mat_right)),
     ]);
+    /*let R=(PI/4.0).cos();
+
+    let mat_left = Arc::new(Lamertian::new(Vec3::new(0.0, 0.0, 1.0)));
+    let mat_right = Arc::new(Lamertian::new(Vec3::new(1.0, 0.0, 0.0)));
+    let world = HittableList::new(vec![
+        Box::new(Sphere::new(Vec3::new(-R, 0.0, -1.0), R, mat_left)),
+        Box::new(Sphere::new(Vec3::new(R, 0.0, -1.0), R, mat_right)),
+    ]);*/
     //camera
-    let cam = Camera::new(aspect_ratio);
+    let cam = Camera::new(
+        Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        90.0,
+        aspect_ratio,
+    );
     //let ba = ProgressBar::new(256);
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
     //render

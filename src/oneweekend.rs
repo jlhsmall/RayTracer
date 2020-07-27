@@ -3,9 +3,9 @@ pub const INF: f64 = 100000000000000000.0;
 
 use crate::vec3::Vec3;
 use rand::prelude::*;
-/*fn degree_to_radian(degree:f64)->f64{
-    degree*PI/180.0
-}*/
+pub fn degree_to_radian(degree: f64) -> f64 {
+    degree * PI / 180.0
+}
 pub fn rand_double(low: f64, high: f64) -> f64 {
     let mut rng = rand::thread_rng();
     let x: f64 = rng.gen();
