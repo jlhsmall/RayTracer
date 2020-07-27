@@ -11,6 +11,13 @@ pub fn rand_double(low: f64, high: f64) -> f64 {
     let x: f64 = rng.gen();
     x * (high - low) + low
 }
+pub fn rand_vector(low: f64, high: f64) -> Vec3 {
+    Vec3::new(
+        rand_double(low, high),
+        rand_double(low, high),
+        rand_double(low, high),
+    )
+}
 pub fn rand_unit_vector() -> Vec3 {
     let a = rand_double(0.0, 2.0 * PI);
     let z = rand_double(-1.0, 1.0);
