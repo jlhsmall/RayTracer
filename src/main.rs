@@ -70,7 +70,7 @@ fn main() {
             0.5,
             mat_left.clone(),
         )),
-        Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.45, mat_left)),
+        Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.4, mat_left)),
         Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, mat_right)),
     ]);
     /*let R=(PI/4.0).cos();
@@ -83,7 +83,7 @@ fn main() {
     ]);*/
     //camera
     let cam = Camera::new(
-        Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 0.0, -1.0),
         Vec3::new(0.0, 1.0, 0.0),
         90.0,

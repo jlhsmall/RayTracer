@@ -1,11 +1,11 @@
 pub use crate::object::HitRecord;
+pub use crate::oneweekend::rand_double;
 pub use crate::oneweekend::rand_in_unit_sphere;
 pub use crate::oneweekend::rand_unit_vector;
 pub use crate::ray::Ray;
 pub use crate::vec3::reflect;
 pub use crate::vec3::refract;
 pub use crate::vec3::Vec3;
-
 #[derive(Clone)]
 pub struct ScatterRecord {
     pub attenuation: Vec3,
@@ -61,6 +61,11 @@ impl Material for Metal {
         Option::Some(ScatterRecord::new(self.albedo, scattered))
     }
 }
+fn schlick(cosine: f64, ref_idx: f64) -> f64 {
+    let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+    r0 = r0 * r0;
+    r0 + (1.0 - r0) * ((1.0 - cosine).powf(5.0))
+}
 pub struct Dielectric {
     pub ref_idx: f64,
 }
@@ -88,8 +93,14 @@ impl Material for Dielectric {
             let reflected = reflect(uv, rec.normal);
             scattered = Ray::new(rec.p, reflected);
         } else {
-            let refracted = refract(uv, rec.normal, eta_i_over_t);
-            scattered = Ray::new(rec.p, refracted);
+            let reflect_prob = schlick(cos_theta, eta_i_over_t);
+            if rand_double(0.0, 1.0) < reflect_prob {
+                let reflected = reflect(uv, rec.normal);
+                scattered = Ray::new(rec.p, reflected);
+            } else {
+                let refracted = refract(uv, rec.normal, eta_i_over_t);
+                scattered = Ray::new(rec.p, refracted);
+            }
         }
         Option::Some(ScatterRecord::new(attenuation, scattered))
     }
