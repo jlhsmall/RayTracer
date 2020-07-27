@@ -33,7 +33,7 @@ impl Hittable for Sphere {
             return Option::Some(HitRecord::new(
                 r,
                 p,
-                (p - self.centre).unit(),
+                (p - self.centre)/self.radius,
                 t1,
                 self.mat_ptr.clone(),
             ));
@@ -44,7 +44,7 @@ impl Hittable for Sphere {
             return Option::Some(HitRecord::new(
                 r,
                 p,
-                (p - self.centre).unit(),
+                (p - self.centre)/self.radius,
                 t2,
                 self.mat_ptr.clone(),
             ));
