@@ -52,13 +52,13 @@ impl Material for Lamertian {
     }
 }
 pub struct Metal {
-    pub albedo: Vec3,
+    pub albedo: Arc<dyn Texture>,
     pub fuzz: f64,
 }
 impl Metal {
     pub fn new(albedo: Vec3, fuzz: f64) -> Self {
         Self {
-            albedo,
+            albedo: Arc::new(SolidColor::new(albedo)),
             fuzz: if fuzz < 1.0 { fuzz } else { 1.0 },
         }
     }
@@ -70,7 +70,10 @@ impl Material for Metal {
         if scattered.dir * rec.normal < 0.0 {
             return Option::None;
         }
-        Option::Some(ScatterRecord::new(self.albedo, scattered))
+        Option::Some(ScatterRecord::new(
+            self.albedo.value(rec.u, rec.v, rec.p),
+            scattered,
+        ))
     }
 }
 fn schlick(cosine: f64, ref_idx: f64) -> f64 {
