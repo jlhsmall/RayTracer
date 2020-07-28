@@ -1,7 +1,7 @@
 pub use crate::aabb::AABB;
 pub use crate::object::HitRecord;
 pub use crate::object::Hittable;
-//pub use crate::oneweekend::rand_int;
+pub use crate::oneweekend::rand_int;
 pub use crate::ray::Ray;
 pub use std::sync::Arc;
 
@@ -10,7 +10,7 @@ pub struct BVHNode {
     pub right: Arc<dyn Hittable>,
     pub bbox: AABB,
 }
-/*impl BVHNode {
+impl BVHNode {
     pub fn new(mut objects: Vec<Arc<dyn Hittable>>, span: usize, time0: f64, time1: f64) -> Self {
         let axis = rand_int(0, 2) as usize;
         let left: Arc<dyn Hittable>;
@@ -40,7 +40,7 @@ pub struct BVHNode {
             bbox: AABB::surrounding_box(box1, box2),
         }
     }
-}*/
+}
 impl Hittable for BVHNode {
     fn hit(&self, r: Ray, tmin: f64, tmax: f64) -> Option<HitRecord> {
         if self.bbox.hit(r, tmin, tmax) {

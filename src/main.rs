@@ -32,8 +32,9 @@ pub use sphere::Sphere;
 pub use std::sync::Arc;
 pub use texture::CheckerTexture;
 pub use vec3::Vec3;
+pub use bvh::BVHNode;
 
-fn get_color(r: Ray, background: Vec3, world: &HittableList, depth: i32) -> Vec3 {
+fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
@@ -72,7 +73,7 @@ fn get_color(r: Ray, background: Vec3, world: &HittableList, depth: i32) -> Vec3
         }
     }*/
 }
-fn random_scene() -> HittableList {
+fn random_scene() -> Arc<BVHNode> {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
     let checker = Arc::new(CheckerTexture::new(
         Vec3::new(0.2, 0.3, 0.1),
@@ -131,7 +132,9 @@ fn random_scene() -> HittableList {
         1.0,
         material3,
     )));
-    HittableList::new(objects)
+    let span=objects.len();
+    Arc::new(BVHNode::new(objects,span,0.001,INF))
+    //HittableList::new(vec![tree])
 }
 fn main() {
     //image
@@ -170,7 +173,7 @@ fn main() {
                     ((x as f64) + rand_double(0.0, 1.0)) / ((image_width - 1) as f64),
                     ((y as f64) + rand_double(0.0, 1.0)) / ((image_height - 1) as f64),
                 );
-                color += get_color(r, background, &world, max_depth);
+                color += get_color(r, background, world.clone(), max_depth);
             }
             color /= samples_per_pixel as f64;
             color = Vec3::new(color.x.sqrt(), color.y.sqrt(), color.z.sqrt()) * 255.0;
