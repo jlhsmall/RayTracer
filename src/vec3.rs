@@ -51,6 +51,9 @@ impl Vec3 {
             z: self.z / len,
         }
     }
+    pub fn get_array(&self) -> [f64; 3] {
+        [self.x, self.y, self.z]
+    }
 }
 impl Add for Vec3 {
     type Output = Self;

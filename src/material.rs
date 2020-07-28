@@ -3,9 +3,13 @@ pub use crate::oneweekend::rand_double;
 pub use crate::oneweekend::rand_in_unit_sphere;
 pub use crate::oneweekend::rand_unit_vector;
 pub use crate::ray::Ray;
+use crate::texture::SolidColor;
+pub use crate::texture::Texture;
 pub use crate::vec3::reflect;
 pub use crate::vec3::refract;
 pub use crate::vec3::Vec3;
+pub use std::sync::Arc;
+
 #[derive(Clone)]
 pub struct ScatterRecord {
     pub attenuation: Vec3,
@@ -20,13 +24,21 @@ impl ScatterRecord {
     }
 }
 pub trait Material {
+    fn emitted(&self, _u: f64, _v: f64, _p: Vec3) -> Vec3 {
+        Vec3::new(0.0, 0.0, 0.0)
+    }
     fn scatter(&self, r: Ray, rec: HitRecord) -> Option<ScatterRecord>;
 }
 pub struct Lamertian {
-    pub albedo: Vec3,
+    pub albedo: Arc<dyn Texture>,
 }
 impl Lamertian {
     pub fn new(albedo: Vec3) -> Self {
+        Self {
+            albedo: Arc::new(SolidColor::new(albedo)),
+        }
+    }
+    pub fn newa(albedo: Arc<dyn Texture>) -> Self {
         Self { albedo }
     }
 }
@@ -34,7 +46,7 @@ impl Material for Lamertian {
     fn scatter(&self, _r: Ray, rec: HitRecord) -> Option<ScatterRecord> {
         let scatter_direction = rec.normal + rand_unit_vector();
         Option::Some(ScatterRecord::new(
-            self.albedo,
+            self.albedo.value(rec.u, rec.v, rec.p),
             Ray::new(rec.p, scatter_direction),
         ))
     }
@@ -103,5 +115,23 @@ impl Material for Dielectric {
             }
         }
         Option::Some(ScatterRecord::new(attenuation, scattered))
+    }
+}
+pub struct DiffuseLight {
+    pub emit: Arc<dyn Texture>,
+}
+impl DiffuseLight {
+    pub fn new(c: Vec3) -> Self {
+        Self {
+            emit: Arc::new(SolidColor::new(c)),
+        }
+    }
+}
+impl Material for DiffuseLight {
+    fn emitted(&self, u: f64, v: f64, p: Vec3) -> Vec3 {
+        self.emit.value(u, v, p)
+    }
+    fn scatter(&self, _r: Ray, _rec: HitRecord) -> Option<ScatterRecord> {
+        Option::None
     }
 }

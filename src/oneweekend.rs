@@ -1,11 +1,16 @@
 pub use std::f64::consts::PI;
-pub const INF: f64 = 100000000000000000.0;
+pub const INF: f64 = f64::INFINITY;
 
 use crate::vec3::Vec3;
 use rand::prelude::*;
 pub fn degree_to_radian(degree: f64) -> f64 {
     degree * PI / 180.0
 }
+/*pub fn rand_int(low: i32, high: i32) -> i32 {
+    let mut rng = rand::thread_rng();
+    let x: i32 = rng.gen();
+    x % (high - low + 1) + low
+}*/
 pub fn rand_double(low: f64, high: f64) -> f64 {
     let mut rng = rand::thread_rng();
     let x: f64 = rng.gen();
@@ -43,6 +48,20 @@ pub fn rand_in_unit_disk() -> Vec3 {
         y = rand_double(-1.0, 1.0);
     }
     Vec3::new(x, y, 0.0)
+}
+pub fn get_min(x: f64, y: f64) -> f64 {
+    if x < y {
+        x
+    } else {
+        y
+    }
+}
+pub fn get_max(x: f64, y: f64) -> f64 {
+    if x > y {
+        x
+    } else {
+        y
+    }
 }
 /*
 pub fn clamp(x:f64,low:f64,high:f64)->f64{
