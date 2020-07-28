@@ -19,8 +19,8 @@ impl BVHNode {
             left = objects.remove(0);
             right = left.clone();
         } else if span == 2 {
-            left = objects.remove(0);
             right = objects.remove(1);
+            left = objects.remove(0);
         } else {
             objects.sort_by(|a, b| {
                 let x = a.bounding_box(time0, time1).unwrap().mi[axis];
@@ -30,7 +30,7 @@ impl BVHNode {
             let mid = span / 2;
             let (objects1, objects2) = objects.split_at_mut(mid);
             left = Arc::new(BVHNode::new(objects1.to_vec(), mid, time0, time1));
-            right = Arc::new(BVHNode::new(objects2.to_vec(), mid, time0, time1));
+            right = Arc::new(BVHNode::new(objects2.to_vec(), span - mid, time0, time1));
         }
         let box1 = left.bounding_box(time0, time1).unwrap();
         let box2 = right.bounding_box(time0, time1).unwrap();
@@ -43,13 +43,21 @@ impl BVHNode {
 }
 impl Hittable for BVHNode {
     fn hit(&self, r: Ray, tmin: f64, tmax: f64) -> Option<HitRecord> {
-        if self.bbox.hit(r, tmin, tmax) {
+        if !self.bbox.hit(r, tmin, tmax) {
             Option::None
         } else {
             let hit_left = self.left.hit(r, tmin, tmax);
             let hit_right = self.right.hit(r, tmin, tmax);
-            if hit_left.is_some() {
-                hit_left
+            if let Option::Some(recl) = hit_left {
+                if let Option::Some(recr) = hit_right {
+                    if recl.t < recr.t {
+                        Option::Some(recl)
+                    } else {
+                        Option::Some(recr)
+                    }
+                } else {
+                    Option::Some(recl)
+                }
             } else {
                 hit_right
             }

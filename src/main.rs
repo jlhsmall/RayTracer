@@ -15,6 +15,7 @@ pub use hittablelist::HittableList;
 use image::{ImageBuffer, RgbImage};
 //use indicatif::ProgressBar;
 pub use crate::material::DiffuseLight;
+pub use bvh::BVHNode;
 pub use camera::Camera;
 pub use material::Dielectric;
 pub use material::Lamertian;
@@ -32,7 +33,6 @@ pub use sphere::Sphere;
 pub use std::sync::Arc;
 pub use texture::CheckerTexture;
 pub use vec3::Vec3;
-pub use bvh::BVHNode;
 
 fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
@@ -132,16 +132,16 @@ fn random_scene() -> Arc<BVHNode> {
         1.0,
         material3,
     )));
-    let span=objects.len();
-    Arc::new(BVHNode::new(objects,span,0.001,INF))
+    let span = objects.len();
+    Arc::new(BVHNode::new(objects, span, 0.001, INF))
     //HittableList::new(vec![tree])
 }
 fn main() {
     //image
     let aspect_ratio = 3.0 / 2.0;
-    let image_width: u32 = 300;
+    let image_width: u32 = 1200;
     let image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
-    let samples_per_pixel: u32 = 16;
+    let samples_per_pixel: u32 = 64;
     let max_depth = 50;
     //world
     let background = Vec3::new(0.0, 0.0, 0.0);

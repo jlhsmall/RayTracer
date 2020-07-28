@@ -30,9 +30,7 @@ impl AABB {
             let mut t0 = (self.mi[a] - origin[a]) * inv_d;
             let mut t1 = (self.mx[a] - origin[a]) * inv_d;
             if inv_d < 0.0 {
-                let t2=t0;
-                t0=t1;
-                t1=t2;
+                std::mem::swap(&mut t0, &mut t1)
             }
             if t0 > t_mi {
                 t_mi = t0;

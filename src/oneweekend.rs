@@ -6,15 +6,13 @@ use rand::prelude::*;
 pub fn degree_to_radian(degree: f64) -> f64 {
     degree * PI / 180.0
 }
-pub fn rand_int(low: i32, high: i32) -> i32 {
-    let mut rng = rand::thread_rng();
-    let x: i32 = rng.gen();
-    x % (high - low + 1) + low
-}
 pub fn rand_double(low: f64, high: f64) -> f64 {
     let mut rng = rand::thread_rng();
     let x: f64 = rng.gen();
     x * (high - low) + low
+}
+pub fn rand_int(low: i32, high: i32) -> i32 {
+    rand_double(low as f64, (high + 1) as f64) as i32
 }
 pub fn rand_vector(low: f64, high: f64) -> Vec3 {
     Vec3::new(
