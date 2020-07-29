@@ -13,7 +13,7 @@ mod texture;
 mod vec3;
 pub use hittablelist::HittableList;
 use image::{ImageBuffer, RgbImage};
-//use indicatif::ProgressBar;
+use indicatif::ProgressBar;
 pub use crate::material::DiffuseLight;
 pub use bvh::BVHNode;
 pub use camera::Camera;
@@ -33,7 +33,8 @@ pub use sphere::Sphere;
 pub use std::sync::Arc;
 pub use texture::CheckerTexture;
 pub use vec3::Vec3;
-
+use std::sync::mpsc::channel;
+use threadpool::ThreadPool;
 fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
@@ -136,12 +137,23 @@ fn random_scene() -> Arc<BVHNode> {
     Arc::new(BVHNode::new(objects, span, 0.001, INF))
     //HittableList::new(vec![tree])
 }
+fn is_ci() -> bool {
+    option_env!("CI").unwrap_or_default() == "true"
+}
 fn main() {
+    let is_ci = is_ci();
+
+    // jobs: split image into how many parts
+    // workers: maximum allowed concurrent running threads
+    let (image_width, samples_per_pixel): (u32,u32) = if is_ci { (1200, 64) } else { (300, 16) };
+
+    println!(
+        "CI: {}, using {} width and {} samples",
+        is_ci, image_width, samples_per_pixel
+    );
     //image
     let aspect_ratio = 3.0 / 2.0;
-    let image_width: u32 = 1200;
     let image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
-    let samples_per_pixel: u32 = 64;
     let max_depth = 50;
     //world
     let background = Vec3::new(0.0, 0.0, 0.0);
@@ -161,27 +173,60 @@ fn main() {
         aperture,
         focus_dist,
     );
-    //let ba = ProgressBar::new(256);
-    let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
+    let (tx, rx) = channel();
+    let n_jobs: usize = 32;
+    let n_workers = 4;
+    let pool = ThreadPool::new(n_workers);
+    let ba = ProgressBar::new(n_jobs as u64);
     //render
-    for y in 0..image_height {
+    for i in 0..n_jobs {
+        let tx = tx.clone();
+        let world_ptr=world.clone();
+        pool.execute(move || {
+            let row_begin = image_height as usize * i / n_jobs;
+            let row_end = image_height as usize * (i + 1) / n_jobs;
+            let render_height = row_end - row_begin;
+            let mut img: RgbImage = ImageBuffer::new(image_width, render_height as u32);
+            for x in 0..image_width {
+                for (img_y, y) in (row_begin..row_end).enumerate() {
+                    let y = image_height - (y as u32) - 1;
+                    let pixel = img.get_pixel_mut(x, img_y as u32);
+                    let mut color = Vec3::new(0.0, 0.0, 0.0);
+                    for _i in 0..samples_per_pixel {
+                        let r = cam.get_ray(
+                            ((x as f64) + rand_double(0.0, 1.0)) / ((image_width - 1) as f64),
+                            ((y as f64) + rand_double(0.0, 1.0)) / ((image_height - 1) as f64),
+                        );
+                        color += get_color(r, background, world_ptr.clone(), max_depth);
+                    }
+                    color /= samples_per_pixel as f64;
+                    color = Vec3::new(color.x.sqrt(), color.y.sqrt(), color.z.sqrt()) * 255.0;
+                    *pixel = image::Rgb([color.x as u8, color.y as u8, color.z as u8]);
+                }
+            }
+            tx.send((row_begin..row_end, img))
+                .expect("failed to send result");
+        });
+    }
+    let mut result: RgbImage = ImageBuffer::new(image_width, image_height);
+    for (rows, data) in rx.iter().take(n_jobs) {
+        for (idx, row) in rows.enumerate() {
+            for col in 0..image_width {
+                let row = row as u32;
+                let idx = idx as u32;
+                *result.get_pixel_mut(col, row) = *data.get_pixel(col, idx);
+            }
+        }
+        ba.inc(1);
+    }
+    /*for y in 0..image_height {
         for x in 0..image_width {
             let pixel = img.get_pixel_mut(x, image_height - y - 1);
-            let mut color = Vec3::new(0.0, 0.0, 0.0);
-            for _i in 0..samples_per_pixel {
-                let r = cam.get_ray(
-                    ((x as f64) + rand_double(0.0, 1.0)) / ((image_width - 1) as f64),
-                    ((y as f64) + rand_double(0.0, 1.0)) / ((image_height - 1) as f64),
-                );
-                color += get_color(r, background, world.clone(), max_depth);
-            }
-            color /= samples_per_pixel as f64;
-            color = Vec3::new(color.x.sqrt(), color.y.sqrt(), color.z.sqrt()) * 255.0;
-            *pixel = image::Rgb([color.x as u8, color.y as u8, color.z as u8]);
-        }
-        //ba.inc(1);
-    }
 
-    img.save("output/test.png").unwrap();
-    //ba.finish();
+        }
+        ba.inc(1);
+    }
+*/
+    result.save("output/test.png").unwrap();
+    ba.finish();
 }

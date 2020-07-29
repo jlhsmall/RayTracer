@@ -2,7 +2,7 @@ pub use crate::oneweekend::degree_to_radian;
 use crate::oneweekend::rand_in_unit_disk;
 pub use crate::ray::Ray;
 pub use crate::vec3::Vec3;
-
+#[derive(Copy, Clone)]
 pub struct Camera {
     pub origin: Vec3,
     pub lower_left_corner: Vec3,

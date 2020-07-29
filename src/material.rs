@@ -23,7 +23,7 @@ impl ScatterRecord {
         }
     }
 }
-pub trait Material {
+pub trait Material : Send + Sync{
     fn emitted(&self, _u: f64, _v: f64, _p: Vec3) -> Vec3 {
         Vec3::new(0.0, 0.0, 0.0)
     }
