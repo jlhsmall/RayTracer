@@ -1,3 +1,4 @@
+#![allow(clippy::float_cmp)]
 extern crate rand;
 mod aabb;
 mod bvh;
@@ -9,14 +10,14 @@ mod oneweekend;
 mod ray;
 mod sphere;
 mod texture;
-#[allow(clippy::float_cmp)]
+const AUTHOR: &str = "jlhsmall";
 mod vec3;
-pub use hittablelist::HittableList;
-use image::{ImageBuffer, RgbImage};
-use indicatif::ProgressBar;
 pub use crate::material::DiffuseLight;
 pub use bvh::BVHNode;
 pub use camera::Camera;
+pub use hittablelist::HittableList;
+use image::{ImageBuffer, Rgb, RgbImage};
+use indicatif::ProgressBar;
 pub use material::Dielectric;
 pub use material::Lamertian;
 pub use material::Material;
@@ -29,12 +30,13 @@ pub use oneweekend::rand_vector;
 pub use oneweekend::INF;
 pub use oneweekend::PI;
 pub use ray::Ray;
+use rusttype::Font;
 pub use sphere::Sphere;
+use std::sync::mpsc::channel;
 pub use std::sync::Arc;
 pub use texture::CheckerTexture;
-pub use vec3::Vec3;
-use std::sync::mpsc::channel;
 use threadpool::ThreadPool;
+pub use vec3::Vec3;
 fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
@@ -137,15 +139,48 @@ fn random_scene() -> Arc<BVHNode> {
     Arc::new(BVHNode::new(objects, span, 0.001, INF))
     //HittableList::new(vec![tree])
 }
+fn get_text() -> String {
+    // GITHUB_SHA is the associated commit ID
+    // only available on GitHub Action
+    let github_sha = option_env!("GITHUB_SHA")
+        .map(|x| "@".to_owned() + &x[0..6])
+        .unwrap_or_default();
+    format!("{}{}", AUTHOR, github_sha)
+}
 fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
+}
+fn render_text(image: &mut RgbImage, msg: &str) {
+    let font_file = if is_ci() {
+        "EncodeSans-Regular.ttf"
+    } else {
+        "/System/Library/Fonts/Helvetica.ttc"
+    };
+    let font_path = std::env::current_dir().unwrap().join(font_file);
+    let data = std::fs::read(&font_path).unwrap();
+    let font: Font = Font::try_from_vec(data).unwrap_or_else(|| {
+        panic!(format!(
+            "error constructing a Font from data at {:?}",
+            font_path
+        ));
+    });
+
+    imageproc::drawing::draw_text_mut(
+        image,
+        Rgb([255, 255, 255]),
+        10,
+        10,
+        rusttype::Scale::uniform(24.0),
+        &font,
+        msg,
+    );
 }
 fn main() {
     let is_ci = is_ci();
 
     // jobs: split image into how many parts
     // workers: maximum allowed concurrent running threads
-    let (image_width, samples_per_pixel): (u32,u32) = if is_ci { (1200, 64) } else { (300, 16) };
+    let (image_width, samples_per_pixel): (u32, u32) = if is_ci { (1200, 64) } else { (300, 16) };
 
     println!(
         "CI: {}, using {} width and {} samples",
@@ -181,7 +216,7 @@ fn main() {
     //render
     for i in 0..n_jobs {
         let tx = tx.clone();
-        let world_ptr=world.clone();
+        let world_ptr = world.clone();
         pool.execute(move || {
             let row_begin = image_height as usize * i / n_jobs;
             let row_end = image_height as usize * (i + 1) / n_jobs;
@@ -220,13 +255,16 @@ fn main() {
         ba.inc(1);
     }
     /*for y in 0..image_height {
-        for x in 0..image_width {
-            let pixel = img.get_pixel_mut(x, image_height - y - 1);
+            for x in 0..image_width {
+                let pixel = img.get_pixel_mut(x, image_height - y - 1);
 
+            }
+            ba.inc(1);
         }
-        ba.inc(1);
-    }
-*/
-    result.save("output/test.png").unwrap();
+    */
     ba.finish();
+    let msg = get_text();
+    println!("Extra Info: {}", msg);
+    render_text(&mut result, msg.as_str());
+    result.save("output/test.png").unwrap();
 }

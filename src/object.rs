@@ -36,7 +36,7 @@ impl HitRecord {
         }
     }
 }
-pub trait Hittable  : Send + Sync{
+pub trait Hittable: Send + Sync {
     fn hit(&self, r: Ray, tmin: f64, tmax: f64) -> Option<HitRecord>;
     fn bounding_box(&self, t0: f64, t1: f64) -> Option<AABB>;
 }
