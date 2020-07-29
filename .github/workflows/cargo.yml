@@ -46,7 +46,7 @@ jobs:
         with:
           toolchain: stable
       - name: Download Dependencies 🛎️
-          run: wget https://github.com/google/fonts/raw/master/ofl/encodesans/static/EncodeSans-Regular.ttf
+        run: wget https://github.com/google/fonts/raw/master/ofl/encodesans/static/EncodeSans-Regular.ttf
       - uses: actions-rs/cargo@v1
         name: Build 🔧
         with:
