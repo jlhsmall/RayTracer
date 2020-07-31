@@ -1,6 +1,5 @@
 pub use crate::aabb::AABB;
-pub use crate::object::HitRecord;
-pub use crate::object::Hittable;
+pub use crate::object::{HitRecord, Hittable};
 pub use crate::ray::Ray;
 pub use std::sync::Arc;
 pub struct HittableList {

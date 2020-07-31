@@ -44,7 +44,8 @@ TA Wenxin Zheng 会有更详细的说明。
     * 通常来说，你只需要用到前 6 章和第 10.2 节的内容。
     * 如果碰到了 lifetime 相关的问题，请仔细阅读第 4 章，特别是 4.2 的例子。
     * 当然，你也可以通过第 15 章中的智能指针解决一部分 lifetime 导致的问题。
-    * Rust 的面向对象特性（trait，对应 C++ 的类）可以在 10.2 中找到。
+    * Rust 的面向对象特性（trait，对应 C++ 的类）可以 
+    在 10.2 中找到。
     * 如果你希望编写一个多线程的渲染器，可以阅读第 15、16 章的内容。
 * [rustlings](https://github.com/rust-lang/rustlings) 包含许多 Rust 小练习。如果你希望通过练习来学习 Rust 语言，可以尝试一下这个参考资料。
 * [Ray Tracing in One Weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html)

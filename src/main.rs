@@ -1,8 +1,10 @@
 #![allow(clippy::float_cmp)]
 extern crate rand;
 mod aabb;
+mod aarect;
 mod bvh;
 mod camera;
+mod cbox;
 mod hittablelist;
 mod material;
 mod object;
@@ -10,25 +12,18 @@ mod oneweekend;
 mod ray;
 mod sphere;
 mod texture;
-const AUTHOR: &str = "@jlhsmall";
+const AUTHOR: &str = "jlhsmall";
 mod vec3;
-pub use crate::material::DiffuseLight;
+pub use aarect::{XYRect, XZRect, YZRect};
 pub use bvh::BVHNode;
 pub use camera::Camera;
+pub use cbox::CBox;
 pub use hittablelist::HittableList;
 use image::{ImageBuffer, Rgb, RgbImage};
 use indicatif::ProgressBar;
-pub use material::Dielectric;
-pub use material::Lamertian;
-pub use material::Material;
-pub use material::Metal;
-pub use object::HitRecord;
-pub use object::Hittable;
-pub use oneweekend::rand_double;
-pub use oneweekend::rand_unit_vector;
-pub use oneweekend::rand_vector;
-pub use oneweekend::INF;
-pub use oneweekend::PI;
+pub use material::{Dielectric, DiffuseLight, Lamertian, Material, Metal};
+pub use object::{HitRecord, Hittable, RotateY, Translate};
+pub use oneweekend::{rand_double, rand_unit_vector, rand_vector, INF, PI};
 pub use ray::Ray;
 use rusttype::Font;
 pub use sphere::Sphere;
@@ -37,6 +32,7 @@ pub use std::sync::Arc;
 pub use texture::CheckerTexture;
 use threadpool::ThreadPool;
 pub use vec3::Vec3;
+
 fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
@@ -57,24 +53,6 @@ fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 
             rec2.attenuation,
             get_color(rec2.scattered, background, world, depth - 1),
         )
-    /*match opt {
-        Option::Some(rec) => {
-            let opt2 = rec.mat_ptr.scatter(r, rec.clone());
-            match opt2 {
-                Option::Some(rec2) => Vec3::elemul(
-                    get_color(rec2.scattered, world, depth - 1),
-                    rec2.attenuation,
-                ),
-                Option::None => Vec3::new(0.0, 0.0, 0.0),
-            }
-        }
-        Option::None => {
-            let v1 = Vec3::new(0.5, 0.7, 1.0);
-            let v2 = Vec3::new(1.0, 1.0, 1.0);
-            let t = (r.dir.y / r.dir.length() + 1.0) / 2.0;
-            v1 * t + v2 * (1.0 - t)
-        }
-    }*/
 }
 fn random_scene() -> Arc<BVHNode> {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
@@ -139,6 +117,76 @@ fn random_scene() -> Arc<BVHNode> {
     Arc::new(BVHNode::new(objects, span, 0.001, INF))
     //HittableList::new(vec![tree])
 }
+fn simple_light() -> Arc<BVHNode> {
+    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let checker = Arc::new(CheckerTexture::new(
+        Vec3::new(0.2, 0.3, 0.1),
+        Vec3::new(0.9, 0.9, 0.9),
+    ));
+    objects.push(Arc::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        -1000.0,
+        Arc::new(Lamertian::newa(checker)),
+    )));
+    let difflight = Arc::new(DiffuseLight::new(Vec3::new(4.0, 4.0, 4.0)));
+    objects.push(Arc::new(XYRect::new(3.0, 5.0, 1.0, 3.0, -2.0, difflight)));
+    let span = objects.len();
+    Arc::new(BVHNode::new(objects, span, 0.001, INF))
+}
+fn cornell_box() -> Arc<BVHNode> {
+    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let red = Arc::new(Lamertian::new(Vec3::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lamertian::new(Vec3::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lamertian::new(Vec3::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new(Vec3::new(15.0, 15.0, 15.0)));
+    objects.push(Arc::new(YZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, green)));
+    objects.push(Arc::new(YZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, red)));
+    objects.push(Arc::new(XZRect::new(
+        213.0, 343.0, 227.0, 332.0, 554.0, light,
+    )));
+    objects.push(Arc::new(XZRect::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        white.clone(),
+    )));
+    objects.push(Arc::new(XZRect::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        white.clone(),
+    )));
+    objects.push(Arc::new(XYRect::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        white.clone(),
+    )));
+    let mut box1: Arc<dyn Hittable> = Arc::new(CBox::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 330.0, 165.0),
+        white.clone(),
+    ));
+    box1 = Arc::new(RotateY::new(box1, 15.0));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
+    objects.push(box1);
+    let mut box2: Arc<dyn Hittable> = Arc::new(CBox::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 165.0, 165.0),
+        white,
+    ));
+    box2 = Arc::new(RotateY::new(box2, -18.0));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+    objects.push(box2);
+    let span = objects.len();
+    Arc::new(BVHNode::new(objects, span, 0.001, INF))
+}
 fn get_text() -> String {
     // GITHUB_SHA is the associated commit ID
     // only available on GitHub Action
@@ -180,30 +228,57 @@ fn main() {
 
     // jobs: split image into how many parts
     // workers: maximum allowed concurrent running threads
-    let (image_width, samples_per_pixel): (u32, u32) = if is_ci { (1200, 64) } else { (300, 16) };
+    let (image_width, samples_per_pixel): (u32, u32) = if is_ci { (1200, 200) } else { (300, 64) };
 
     println!(
         "CI: {}, using {} width and {} samples",
         is_ci, image_width, samples_per_pixel
     );
+    let aspect_ratio: f64;
+    let image_height: u32;
+    let max_depth: i32;
     //image
-    let aspect_ratio = 3.0 / 2.0;
-    let image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
-    let max_depth = 50;
     //world
     let background = Vec3::new(0.0, 0.0, 0.0);
-    let world = random_scene();
+    let world: Arc<BVHNode>;
     //camera
-    let lookfrom = Vec3::new(13.0, 2.0, 3.0);
-    let lookat = Vec3::new(0.0, 0.0, 0.0);
-    let vup = Vec3::new(0.0, 1.0, 0.0);
+
+    let lookfrom: Vec3;
+    let lookat: Vec3;
+    let vfov: f64;
+    let vup: Vec3;
     let focus_dist = 10.0;
     let aperture = 0.1;
+    let x = 2;
+    if x == 0 {
+        world = random_scene();
+        aspect_ratio = 3.0 / 2.0;
+        lookfrom = Vec3::new(13.0, 2.0, 3.0);
+        lookat = Vec3::new(0.0, 0.0, 0.0);
+        vup = Vec3::new(0.0, 1.0, 0.0);
+        vfov = 20.0;
+    } else if x == 1 {
+        world = simple_light();
+        aspect_ratio = 3.0 / 2.0;
+        lookfrom = Vec3::new(26.0, 3.0, 6.0);
+        lookat = Vec3::new(0.0, 2.0, 0.0);
+        vup = Vec3::new(0.0, 1.0, 0.0);
+        vfov = 20.0;
+    } else {
+        world = cornell_box();
+        aspect_ratio = 1.0;
+        lookfrom = Vec3::new(278.0, 278.0, -800.0);
+        lookat = Vec3::new(278.0, 278.0, 0.0);
+        vup = Vec3::new(0.0, 1.0, 0.0);
+        vfov = 40.0;
+    }
+    image_height = (image_width as f64 / aspect_ratio) as u32;
+    max_depth = 50;
     let cam = Camera::new(
         lookfrom,
         lookat,
         vup,
-        20.0,
+        vfov,
         aspect_ratio,
         aperture,
         focus_dist,
