@@ -50,8 +50,8 @@ fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 
     let rec2 = opt2.unwrap();
     emitted
         + Vec3::elemul(
-            rec2.attenuation,
-            get_color(rec2.scattered, background, world, depth - 1),
+            rec2.albedo,
+            get_color(rec2.scattered, background, world, depth - 1)*rec.mat_ptr.scattering_pdf(r,rec.clone(),rec2.scattered)/rec2.pdf
         )
 }
 fn random_scene() -> Arc<BVHNode> {
@@ -228,7 +228,7 @@ fn main() {
 
     // jobs: split image into how many parts
     // workers: maximum allowed concurrent running threads
-    let (image_width, samples_per_pixel): (u32, u32) = if is_ci { (1200, 200) } else { (300, 64) };
+    let (image_width, samples_per_pixel): (u32, u32) = if is_ci { (1200, 200) } else { (600, 100) };
 
     println!(
         "CI: {}, using {} width and {} samples",
@@ -265,6 +265,7 @@ fn main() {
         vup = Vec3::new(0.0, 1.0, 0.0);
         vfov = 20.0;
     } else {
+
         world = cornell_box();
         aspect_ratio = 1.0;
         lookfrom = Vec3::new(278.0, 278.0, -800.0);
