@@ -12,6 +12,8 @@ mod oneweekend;
 mod ray;
 mod sphere;
 mod texture;
+mod onb;
+mod pdf;
 const AUTHOR: &str = "jlhsmall";
 mod vec3;
 pub use aarect::{XYRect, XZRect, YZRect};
@@ -22,7 +24,7 @@ pub use hittablelist::HittableList;
 use image::{ImageBuffer, Rgb, RgbImage};
 use indicatif::ProgressBar;
 pub use material::{Dielectric, DiffuseLight, Lamertian, Material, Metal};
-pub use object::{HitRecord, Hittable, RotateY, Translate};
+pub use object::{HitRecord, Hittable, RotateY, Translate,FlipFace};
 pub use oneweekend::{rand_double, rand_unit_vector, rand_vector, INF, PI};
 pub use ray::Ray;
 use rusttype::Font;
@@ -32,6 +34,8 @@ pub use std::sync::Arc;
 pub use texture::CheckerTexture;
 use threadpool::ThreadPool;
 pub use vec3::Vec3;
+pub use pdf::CosinePDF;
+use crate::pdf::PDF;
 
 fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
@@ -43,15 +47,30 @@ fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 
     }
     let rec = opt.unwrap();
     let opt2 = rec.mat_ptr.scatter(r, rec.clone());
-    let emitted = rec.mat_ptr.emitted(rec.u, rec.v, rec.p);
+    let emitted = rec.mat_ptr.emitted(r,rec.clone(),rec.u, rec.v, rec.p);
     if opt2.is_none() {
         return emitted;
     }
     let rec2 = opt2.unwrap();
+    let on_light=Vec3::new(rand_double(213.0,343.0),554.0,rand_double(227.0,332.0));
+    let mut to_light=on_light-rec.p;
+    let distance_squared=to_light.squared_length();
+    to_light=to_light.unit();
+    if to_light*rec.normal<0.0{
+        return emitted;
+    }
+    let light_area=(343.0-213.0)*(332.0-227.0);
+    let light_cosine=to_light.y.abs();
+    if light_cosine<0.000001{
+        return emitted;
+    }
+    let p=CosinePDF::new(rec.normal);
+    let scattered=Ray::new(rec.p,p.generate());
+    let pdf_val=p.value(scattered.dir);
     emitted
         + Vec3::elemul(
             rec2.albedo,
-            get_color(rec2.scattered, background, world, depth - 1)*rec.mat_ptr.scattering_pdf(r,rec.clone(),rec2.scattered)/rec2.pdf
+            get_color(scattered, background, world, depth - 1)*rec.mat_ptr.scattering_pdf(r,rec.clone(),scattered)/pdf_val
         )
 }
 fn random_scene() -> Arc<BVHNode> {
@@ -141,9 +160,9 @@ fn cornell_box() -> Arc<BVHNode> {
     let light = Arc::new(DiffuseLight::new(Vec3::new(15.0, 15.0, 15.0)));
     objects.push(Arc::new(YZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, green)));
     objects.push(Arc::new(YZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, red)));
-    objects.push(Arc::new(XZRect::new(
+    objects.push(Arc::new(FlipFace::new(Arc::new(XZRect::new(
         213.0, 343.0, 227.0, 332.0, 554.0, light,
-    )));
+    )))));
     objects.push(Arc::new(XZRect::new(
         0.0,
         555.0,

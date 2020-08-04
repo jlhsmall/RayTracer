@@ -1,7 +1,5 @@
 pub use crate::object::HitRecord;
-pub use crate::oneweekend::rand_double;
-pub use crate::oneweekend::rand_in_unit_sphere;
-pub use crate::oneweekend::rand_unit_vector;
+pub use crate::oneweekend::{rand_double,rand_in_unit_sphere,rand_unit_vector,rand_in_hemisphere,rand_cosine_direction};
 pub use crate::ray::Ray;
 use crate::texture::SolidColor;
 pub use crate::texture::Texture;
@@ -10,6 +8,7 @@ pub use crate::vec3::refract;
 pub use crate::vec3::Vec3;
 pub use std::sync::Arc;
 pub use std::f64::consts::PI;
+pub use crate::onb::ONB;
 
 #[derive(Clone)]
 pub struct ScatterRecord {
@@ -27,15 +26,24 @@ impl ScatterRecord {
     }
 }
 pub trait Material: Send + Sync {
-    fn emitted(&self, _u: f64, _v: f64, _p: Vec3) -> Vec3 {
+    fn emitted(&self,_r:Ray,_rec:HitRecord, _u: f64, _v: f64, _p: Vec3) -> Vec3 {
         Vec3::new(0.0, 0.0, 0.0)
     }
-    fn scatter(&self, r: Ray, rec: HitRecord) -> Option<ScatterRecord>{
+    fn scatter(&self, _r: Ray, _rec: HitRecord) -> Option<ScatterRecord>{
         Option::None
     }
-    fn scattering_pdf(&self,r:Ray,rec:HitRecord,scattered:Ray)->f64{
-        return 0.0;
+    fn scattering_pdf(&self,_r:Ray,_rec:HitRecord,_scattered:Ray)->f64{
+        0.0
     }
+}
+pub struct NoMaterial{}
+impl NoMaterial{
+    pub fn new()->Self{
+        Self{}
+    }
+}
+impl Material for NoMaterial{
+
 }
 pub struct Lamertian {
     pub albedo: Arc<dyn Texture>,
@@ -52,11 +60,12 @@ impl Lamertian {
 }
 impl Material for Lamertian {
     fn scatter(&self, _r: Ray, rec: HitRecord) -> Option<ScatterRecord> {
-        let scatter_direction = (rec.normal + rand_unit_vector()).unit();
+        let uvw=ONB::new_from_w(rec.normal);
+        let direction = uvw.local(rand_cosine_direction()).unit();
         Option::Some(ScatterRecord::new(
             self.albedo.value(rec.u, rec.v, rec.p),
-            Ray::new(rec.p, scatter_direction),
-            rec.normal*scatter_direction/PI
+            Ray::new(rec.p, direction),
+            uvw.w()*direction/PI
         ))
     }
     fn scattering_pdf(&self,_r:Ray,rec:HitRecord,scattered:Ray)->f64{
@@ -144,8 +153,9 @@ impl DiffuseLight {
     }
 }
 impl Material for DiffuseLight {
-    fn emitted(&self, u: f64, v: f64, p: Vec3) -> Vec3 {
-        self.emit.value(u, v, p)
+    fn emitted(&self,_r:Ray,rec:HitRecord, u: f64, v: f64, p: Vec3) -> Vec3 {
+        if rec.front_face{self.emit.value(u, v, p)}
+        else{Vec3::zero()}
     }
     fn scatter(&self, _r: Ray, _rec: HitRecord) -> Option<ScatterRecord> {
         Option::None

@@ -4,6 +4,8 @@ pub use crate::object::{HitRecord, Hittable};
 pub use crate::ray::Ray;
 pub use crate::vec3::Vec3;
 pub use std::sync::Arc;
+pub use crate::oneweekend::{rand_double,INF};
+
 pub struct XYRect {
     x0: f64,
     x1: f64,
@@ -134,5 +136,21 @@ impl Hittable for XZRect {
             Vec3::new(self.x0, self.k - 0.0001, self.z0),
             Vec3::new(self.x1, self.k + 0.0001, self.z1),
         ))
+    }
+    fn pdf_value(&self,o:Vec3,v:Vec3)->f64{
+        let opt=self.hit(Ray::new(o,v),0.001,INF);
+        if let Option::Some(rec)=opt{
+            let area=(self.x1-self.x0)*(self.z1-self.z0);
+            let distance_squared=rec.t*rec.t*v.squared_length();
+            let cosine=(v*rec.normal/v.length()).abs();
+            distance_squared/ area/cosine
+        }
+        else{
+            0.0
+        }
+    }
+    fn random(&self,o:Vec3)->Vec3{
+        let random_point=Vec3::new(rand_double(self.x0,self.x1),self.k,rand_double(self.z0,self.z1));
+        random_point-o
     }
 }

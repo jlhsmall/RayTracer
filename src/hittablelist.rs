@@ -9,6 +9,9 @@ impl HittableList {
     pub fn new(objects: Vec<Arc<dyn Hittable>>) -> Self {
         Self { objects }
     }
+    pub fn add(&mut self,x:Arc<dyn Hittable>){
+        self.objects.push(x);
+    }
 }
 impl Hittable for HittableList {
     fn hit(&self, r: Ray, tmin: f64, tmax: f64) -> Option<HitRecord> {
