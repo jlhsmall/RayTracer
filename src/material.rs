@@ -2,29 +2,32 @@ pub use crate::object::HitRecord;
 pub use crate::onb::ONB;
 pub use crate::oneweekend::{
     rand_cosine_direction, rand_double,
-    /*rand_in_hemisphere, rand_in_unit_sphere,*/ rand_unit_vector,
+    /*rand_in_hemisphere,*/ rand_in_unit_sphere, rand_unit_vector,
 };
 pub use crate::ray::Ray;
 use crate::texture::SolidColor;
 pub use crate::texture::Texture;
-//pub use crate::vec3::reflect;
+pub use crate::vec3::reflect;
 //pub use crate::vec3::refract;
 pub use crate::vec3::Vec3;
 pub use std::f64::consts::PI;
 pub use std::sync::Arc;
-
+pub use crate::pdf::{PDF,CosinePDF};
+#[derive(Clone)]
+pub enum ScatterType{
+    Specular(Ray),
+    Pdf(Arc<dyn PDF>),
+}
 #[derive(Clone)]
 pub struct ScatterRecord {
-    pub albedo: Vec3,
-    pub scattered: Ray,
-    pub pdf: f64,
+    pub attenuation: Vec3,
+    pub tp:ScatterType,
 }
 impl ScatterRecord {
-    pub fn new(albedo: Vec3, scattered: Ray, pdf: f64) -> Self {
+    pub fn new(attenuation: Vec3, tp:ScatterType) -> Self {
         Self {
-            albedo,
-            scattered,
-            pdf,
+            attenuation,
+            tp
         }
     }
 }
@@ -57,12 +60,9 @@ impl Lamertian {
 }
 impl Material for Lamertian {
     fn scatter(&self, _r: Ray, rec: HitRecord) -> Option<ScatterRecord> {
-        let uvw = ONB::new_from_w(rec.normal);
-        let direction = uvw.local(rand_cosine_direction()).unit();
         Option::Some(ScatterRecord::new(
             self.albedo.value(rec.u, rec.v, rec.p),
-            Ray::new(rec.p, direction),
-            uvw.w() * direction / PI,
+            ScatterType::Pdf(Arc::new(CosinePDF::new(rec.normal))),
         ))
     }
     fn scattering_pdf(&self, _r: Ray, rec: HitRecord, scattered: Ray) -> f64 {
@@ -75,29 +75,25 @@ impl Material for Lamertian {
     }
 }
 pub struct Metal {
-    pub albedo: Arc<dyn Texture>,
+    pub albedo: Vec3,
     pub fuzz: f64,
 }
 impl Metal {
     pub fn new(albedo: Vec3, fuzz: f64) -> Self {
         Self {
-            albedo: Arc::new(SolidColor::new(albedo)),
+            albedo,
             fuzz: if fuzz < 1.0 { fuzz } else { 1.0 },
         }
     }
 }
 impl Material for Metal {
-    /*fn scatter(&self, r: Ray, rec: HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, r: Ray, rec: HitRecord) -> Option<ScatterRecord> {
         let reflected = reflect(r.dir.unit(), rec.normal);
-        let scattered = Ray::new(rec.p, reflected + rand_in_unit_sphere() * self.fuzz);
-        if scattered.dir * rec.normal < 0.0 {
-            return Option::None;
-        }
         Option::Some(ScatterRecord::new(
-            self.albedo.value(rec.u, rec.v, rec.p),
-            scattered,
+            self.albedo,
+            ScatterType::Specular(Ray::new(rec.p, reflected + rand_in_unit_sphere() * self.fuzz))
         ))
-    }*/
+    }
 } /*
   fn schlick(cosine: f64, ref_idx: f64) -> f64 {
       let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);

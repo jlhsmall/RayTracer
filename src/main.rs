@@ -23,7 +23,7 @@ pub use cbox::CBox;
 pub use hittablelist::HittableList;
 use image::{ImageBuffer, Rgb, RgbImage};
 use indicatif::ProgressBar;
-pub use material::{Dielectric, DiffuseLight, Lamertian, Material, Metal, NoMaterial};
+pub use material::{Dielectric, DiffuseLight, Lamertian, Material, Metal, NoMaterial, ScatterType, ScatterRecord};
 pub use object::{FlipFace, HitRecord, Hittable, RotateY, Translate};
 pub use oneweekend::{rand_double, rand_unit_vector, rand_vector, INF, PI};
 pub use pdf::{CosinePDF, HittablePDF, MixturePDF, PDF};
@@ -36,7 +36,7 @@ pub use texture::CheckerTexture;
 use threadpool::ThreadPool;
 pub use vec3::Vec3;
 
-fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 {
+fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>,lights:Arc<dyn Hittable>, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
@@ -50,27 +50,26 @@ fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 
     if opt2.is_none() {
         return emitted;
     }
-    let rec2 = opt2.unwrap();
-    let light_shape = Arc::new(XZRect::new(
-        213.0,
-        343.0,
-        227.0,
-        332.0,
-        554.0,
-        Arc::new(NoMaterial),
-    ));
-    let p0 = HittablePDF::new(light_shape, rec.p);
-    let p1 = CosinePDF::new(rec.normal);
-    let p = MixturePDF::new(Arc::new(p0), Arc::new(p1));
-    let scattered = Ray::new(rec.p, p.generate());
-    let pdf_val = p.value(scattered.dir);
-    emitted
-        + Vec3::elemul(
-            rec2.albedo,
-            get_color(scattered, background, world, depth - 1)
-                * rec.mat_ptr.scattering_pdf(r, rec.clone(), scattered)
-                / pdf_val,
-        )
+    let rec2=opt2.unwrap();
+    match rec2.tp{
+        ScatterType::Specular(specular_ray)=>{
+            Vec3::elemul(rec2.attenuation,get_color(specular_ray,background,world,lights,depth-1))
+        }
+        ScatterType::Pdf(pdf_ptr)=>{
+            let light_ptr=Arc::new(HittablePDF::new(lights.clone(),rec.p));
+            let p=MixturePDF::new(light_ptr,pdf_ptr);
+            let scattered = Ray::new(rec.p, p.generate());
+            let pdf_val = p.value(scattered.dir);
+            emitted
+                + Vec3::elemul(
+                rec2.attenuation,
+                get_color(scattered, background, world, lights,depth - 1)
+                    * rec.mat_ptr.scattering_pdf(r, rec.clone(), scattered)
+                    / pdf_val,
+            )
+        }
+    }
+
 }
 fn random_scene() -> Arc<BVHNode> {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
@@ -186,10 +185,11 @@ fn cornell_box() -> Arc<BVHNode> {
         555.0,
         white.clone(),
     )));
+    //let aluminum=Arc::new(Metal::new(Vec3::new(0.8, 0.85, 0.88),0.0));
     let mut box1: Arc<dyn Hittable> = Arc::new(CBox::new(
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(165.0, 330.0, 165.0),
-        white.clone(),
+        white.clone()//aluminum,
     ));
     box1 = Arc::new(RotateY::new(box1, 15.0));
     box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
@@ -246,7 +246,7 @@ fn main() {
 
     // jobs: split image into how many parts
     // workers: maximum allowed concurrent running threads
-    let (image_width, samples_per_pixel): (u32, u32) = if is_ci { (1200, 500) } else { (600, 100) };
+    let (image_width, samples_per_pixel): (u32, u32) = if is_ci { (1200, 500) } else { (300, 50) };
 
     println!(
         "CI: {}, using {} width and {} samples",
@@ -290,6 +290,10 @@ fn main() {
         vup = Vec3::new(0.0, 1.0, 0.0);
         vfov = 40.0;
     }
+    let mut light_obj:Vec<Arc<dyn Hittable>>=Vec::new();
+    light_obj.push(Arc::new(XZRect::new(213.0, 343.0, 227.0, 332.0, 554.0,Arc::new(NoMaterial))));
+    light_obj.push(Arc::new(Sphere::new(Vec3::new(190.0, 90.0, 190.0),90.0,Arc::new(NoMaterial))));
+    let lights=Arc::new(HittableList::new(light_obj));
     image_height = (image_width as f64 / aspect_ratio) as u32;
     max_depth = 50;
     let cam = Camera::new(
@@ -310,6 +314,7 @@ fn main() {
     for i in 0..n_jobs {
         let tx = tx.clone();
         let world_ptr = world.clone();
+        let lights_ptr=lights.clone();
         pool.execute(move || {
             let row_begin = image_height as usize * i / n_jobs;
             let row_end = image_height as usize * (i + 1) / n_jobs;
@@ -325,7 +330,7 @@ fn main() {
                             ((x as f64) + rand_double(0.0, 1.0)) / ((image_width - 1) as f64),
                             ((y as f64) + rand_double(0.0, 1.0)) / ((image_height - 1) as f64),
                         );
-                        color += get_color(r, background, world_ptr.clone(), max_depth);
+                        color += get_color(r, background, world_ptr.clone(),lights_ptr.clone(), max_depth);
                     }
                     color /= samples_per_pixel as f64;
                     color = Vec3::new(color.x.sqrt(), color.y.sqrt(), color.z.sqrt()) * 255.0;
