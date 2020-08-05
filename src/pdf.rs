@@ -21,7 +21,7 @@ impl CosinePDF{
 impl PDF for CosinePDF{
     fn value(&self,direction:Vec3)->f64{
         let cosine=direction.unit()*self.uvw.w();
-        if cosine<0.0{0.0}else{cosine/PI}
+        if cosine<=0.0{0.0}else{cosine/PI}
     }
     fn generate(&self)->Vec3{
         self.uvw.local(rand_cosine_direction())

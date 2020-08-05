@@ -23,7 +23,7 @@ pub use cbox::CBox;
 pub use hittablelist::HittableList;
 use image::{ImageBuffer, Rgb, RgbImage};
 use indicatif::ProgressBar;
-pub use material::{Dielectric, DiffuseLight, Lamertian, Material, Metal};
+pub use material::{Dielectric, DiffuseLight, Lamertian, Material, Metal,NoMaterial};
 pub use object::{HitRecord, Hittable, RotateY, Translate,FlipFace};
 pub use oneweekend::{rand_double, rand_unit_vector, rand_vector, INF, PI};
 pub use ray::Ray;
@@ -34,8 +34,7 @@ pub use std::sync::Arc;
 pub use texture::CheckerTexture;
 use threadpool::ThreadPool;
 pub use vec3::Vec3;
-pub use pdf::CosinePDF;
-use crate::pdf::PDF;
+pub use pdf::{HittablePDF,PDF};
 
 fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
@@ -52,19 +51,8 @@ fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 
         return emitted;
     }
     let rec2 = opt2.unwrap();
-    let on_light=Vec3::new(rand_double(213.0,343.0),554.0,rand_double(227.0,332.0));
-    let mut to_light=on_light-rec.p;
-    let distance_squared=to_light.squared_length();
-    to_light=to_light.unit();
-    if to_light*rec.normal<0.0{
-        return emitted;
-    }
-    let light_area=(343.0-213.0)*(332.0-227.0);
-    let light_cosine=to_light.y.abs();
-    if light_cosine<0.000001{
-        return emitted;
-    }
-    let p=CosinePDF::new(rec.normal);
+    let light_shape=Arc::new(XZRect::new(213.0, 343.0, 227.0, 332.0, 554.0,Arc::new(NoMaterial::new()) ));
+    let p=HittablePDF::new(light_shape,rec.normal);
     let scattered=Ray::new(rec.p,p.generate());
     let pdf_val=p.value(scattered.dir);
     emitted
