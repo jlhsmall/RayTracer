@@ -42,11 +42,11 @@ impl HitRecord {
 pub trait Hittable: Send + Sync {
     fn hit(&self, r: Ray, tmin: f64, tmax: f64) -> Option<HitRecord>;
     fn bounding_box(&self, t0: f64, t1: f64) -> Option<AABB>;
-    fn pdf_value(&self,_o:Vec3,_v:Vec3)->f64{
+    fn pdf_value(&self, _o: Vec3, _v: Vec3) -> f64 {
         0.0
     }
-    fn random(&self,_o:Vec3)->Vec3{
-        Vec3::new(1.0,0.0,0.0)
+    fn random(&self, _o: Vec3) -> Vec3 {
+        Vec3::new(1.0, 0.0, 0.0)
     }
 }
 pub struct Translate {
@@ -175,28 +175,25 @@ impl Hittable for RotateY {
         self.box_opt
     }
 }
-pub struct FlipFace{
-    ptr:Arc<dyn Hittable>,
+pub struct FlipFace {
+    ptr: Arc<dyn Hittable>,
 }
-impl FlipFace{
-    pub fn new(ptr:Arc<dyn Hittable>)->Self{
-        Self{
-            ptr
-        }
+impl FlipFace {
+    pub fn new(ptr: Arc<dyn Hittable>) -> Self {
+        Self { ptr }
     }
 }
-impl Hittable for FlipFace{
+impl Hittable for FlipFace {
     fn hit(&self, r: Ray, tmin: f64, tmax: f64) -> Option<HitRecord> {
-        let opt=self.ptr.hit(r,tmin,tmax);
-        if let Option::Some(mut rec)=opt{
-            rec.front_face=!rec.front_face;
+        let opt = self.ptr.hit(r, tmin, tmax);
+        if let Option::Some(mut rec) = opt {
+            rec.front_face = !rec.front_face;
             Option::Some(rec)
-        }
-        else{
+        } else {
             Option::None
         }
     }
     fn bounding_box(&self, t0: f64, t1: f64) -> Option<AABB> {
-        self.ptr.bounding_box(t0,t1)
+        self.ptr.bounding_box(t0, t1)
     }
 }

@@ -8,12 +8,12 @@ mod cbox;
 mod hittablelist;
 mod material;
 mod object;
+mod onb;
 mod oneweekend;
+mod pdf;
 mod ray;
 mod sphere;
 mod texture;
-mod onb;
-mod pdf;
 const AUTHOR: &str = "jlhsmall";
 mod vec3;
 pub use aarect::{XYRect, XZRect, YZRect};
@@ -23,9 +23,10 @@ pub use cbox::CBox;
 pub use hittablelist::HittableList;
 use image::{ImageBuffer, Rgb, RgbImage};
 use indicatif::ProgressBar;
-pub use material::{Dielectric, DiffuseLight, Lamertian, Material, Metal,NoMaterial};
-pub use object::{HitRecord, Hittable, RotateY, Translate,FlipFace};
+pub use material::{Dielectric, DiffuseLight, Lamertian, Material, Metal, NoMaterial};
+pub use object::{FlipFace, HitRecord, Hittable, RotateY, Translate};
 pub use oneweekend::{rand_double, rand_unit_vector, rand_vector, INF, PI};
+pub use pdf::{CosinePDF, HittablePDF, MixturePDF, PDF};
 pub use ray::Ray;
 use rusttype::Font;
 pub use sphere::Sphere;
@@ -34,7 +35,6 @@ pub use std::sync::Arc;
 pub use texture::CheckerTexture;
 use threadpool::ThreadPool;
 pub use vec3::Vec3;
-pub use pdf::{HittablePDF,PDF};
 
 fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 {
     if depth <= 0 {
@@ -46,19 +46,30 @@ fn get_color(r: Ray, background: Vec3, world: Arc<BVHNode>, depth: i32) -> Vec3 
     }
     let rec = opt.unwrap();
     let opt2 = rec.mat_ptr.scatter(r, rec.clone());
-    let emitted = rec.mat_ptr.emitted(r,rec.clone(),rec.u, rec.v, rec.p);
+    let emitted = rec.mat_ptr.emitted(r, rec.clone(), rec.u, rec.v, rec.p);
     if opt2.is_none() {
         return emitted;
     }
     let rec2 = opt2.unwrap();
-    let light_shape=Arc::new(XZRect::new(213.0, 343.0, 227.0, 332.0, 554.0,Arc::new(NoMaterial::new()) ));
-    let p=HittablePDF::new(light_shape,rec.normal);
-    let scattered=Ray::new(rec.p,p.generate());
-    let pdf_val=p.value(scattered.dir);
+    let light_shape = Arc::new(XZRect::new(
+        213.0,
+        343.0,
+        227.0,
+        332.0,
+        554.0,
+        Arc::new(NoMaterial),
+    ));
+    let p0 = HittablePDF::new(light_shape, rec.p);
+    let p1 = CosinePDF::new(rec.normal);
+    let p = MixturePDF::new(Arc::new(p0), Arc::new(p1));
+    let scattered = Ray::new(rec.p, p.generate());
+    let pdf_val = p.value(scattered.dir);
     emitted
         + Vec3::elemul(
             rec2.albedo,
-            get_color(scattered, background, world, depth - 1)*rec.mat_ptr.scattering_pdf(r,rec.clone(),scattered)/pdf_val
+            get_color(scattered, background, world, depth - 1)
+                * rec.mat_ptr.scattering_pdf(r, rec.clone(), scattered)
+                / pdf_val,
         )
 }
 fn random_scene() -> Arc<BVHNode> {
@@ -235,7 +246,7 @@ fn main() {
 
     // jobs: split image into how many parts
     // workers: maximum allowed concurrent running threads
-    let (image_width, samples_per_pixel): (u32, u32) = if is_ci { (1200, 200) } else { (600, 100) };
+    let (image_width, samples_per_pixel): (u32, u32) = if is_ci { (1200, 500) } else { (600, 100) };
 
     println!(
         "CI: {}, using {} width and {} samples",
@@ -255,7 +266,7 @@ fn main() {
     let vfov: f64;
     let vup: Vec3;
     let focus_dist = 10.0;
-    let aperture = 0.1;
+    let aperture = 0.0;
     let x = 2;
     if x == 0 {
         world = random_scene();
@@ -272,7 +283,6 @@ fn main() {
         vup = Vec3::new(0.0, 1.0, 0.0);
         vfov = 20.0;
     } else {
-
         world = cornell_box();
         aspect_ratio = 1.0;
         lookfrom = Vec3::new(278.0, 278.0, -800.0);

@@ -26,27 +26,26 @@ pub fn rand_unit_vector() -> Vec3 {
     let z = rand_double(-1.0, 1.0);
     let r = (1.0 - z * z).sqrt();
     Vec3::new(a.cos() * r, a.sin() * r, z)
-}
-pub fn rand_in_unit_sphere() -> Vec3 {
-    let mut x: f64 = rand_double(-1.0, 1.0);
-    let mut y: f64 = rand_double(-1.0, 1.0);
-    let mut z: f64 = rand_double(-1.0, 1.0);
-    while x * x + y * y + z * z > 1.0 {
-        x = rand_double(-1.0, 1.0);
-        y = rand_double(-1.0, 1.0);
-        z = rand_double(-1.0, 1.0);
-    }
-    Vec3::new(x, y, z)
-}
-pub fn rand_in_hemisphere(normal:Vec3)->Vec3{
-    let in_unit_sphere=rand_in_unit_sphere();
-    if in_unit_sphere*normal<0.0{
-        -in_unit_sphere
-    }
-    else{
-        in_unit_sphere
-    }
-}
+} /*
+  pub fn rand_in_unit_sphere() -> Vec3 {
+      let mut x: f64 = rand_double(-1.0, 1.0);
+      let mut y: f64 = rand_double(-1.0, 1.0);
+      let mut z: f64 = rand_double(-1.0, 1.0);
+      while x * x + y * y + z * z > 1.0 {
+          x = rand_double(-1.0, 1.0);
+          y = rand_double(-1.0, 1.0);
+          z = rand_double(-1.0, 1.0);
+      }
+      Vec3::new(x, y, z)
+  }
+  pub fn rand_in_hemisphere(normal: Vec3) -> Vec3 {
+      let in_unit_sphere = rand_in_unit_sphere();
+      if in_unit_sphere * normal < 0.0 {
+          -in_unit_sphere
+      } else {
+          in_unit_sphere
+      }
+  }*/
 pub fn rand_in_unit_disk() -> Vec3 {
     let mut x: f64 = rand_double(-1.0, 1.0);
     let mut y: f64 = rand_double(-1.0, 1.0);
@@ -56,14 +55,14 @@ pub fn rand_in_unit_disk() -> Vec3 {
     }
     Vec3::new(x, y, 0.0)
 }
-pub fn rand_cosine_direction()->Vec3{
-    let r1=rand_double(0.0,1.0);
-    let r2=rand_double(0.0,1.0);
-    let z=(1.0-r2).sqrt();
-    let phi=2.0*PI*r1;
-    let x=phi.cos()*r2.sqrt();
-    let y=phi.sin()*r2.sqrt();
-    Vec3::new(x,y,z)
+pub fn rand_cosine_direction() -> Vec3 {
+    let r1 = rand_double(0.0, 1.0);
+    let r2 = rand_double(0.0, 1.0);
+    let z = (1.0 - r2).sqrt();
+    let phi = 2.0 * PI * r1;
+    let x = phi.cos() * r2.sqrt();
+    let y = phi.sin() * r2.sqrt();
+    Vec3::new(x, y, z)
 }
 pub fn get_min(x: f64, y: f64) -> f64 {
     if x < y {
