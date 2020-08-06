@@ -6,6 +6,8 @@ pub use crate::ray::Ray;
 pub use crate::vec3::Vec3;
 pub use std::f64::consts::PI;
 pub use std::sync::Arc;
+pub use crate::oneweekend::{INF,rand_to_sphere};
+pub use crate::onb::ONB;
 pub struct Sphere {
     pub centre: Vec3,
     pub radius: f64,
@@ -69,5 +71,18 @@ impl Hittable for Sphere {
     fn bounding_box(&self, _t0: f64, _t1: f64) -> Option<AABB> {
         let tmp = Vec3::ones() * self.radius;
         Option::Some(AABB::new(self.centre - tmp, self.centre + tmp))
+    }
+    fn pdf_value(&self, o: Vec3, v: Vec3) -> f64 {
+        let opt=self.hit(Ray::new(o,v),0.001,INF);
+        if opt.is_none(){return 0.0;}
+        let cos_theta_max=(1.0-self.radius*self.radius/(self.centre-o).squared_length()).sqrt();
+        let solid_angle=2.0*PI*(1.0-cos_theta_max);
+        1.0/solid_angle
+    }
+    fn random(&self, o: Vec3) -> Vec3 {
+        let direction=self.centre-o;
+        let distance_squared=direction.squared_length();
+        let uvw=ONB::new_from_w(direction);
+        uvw.local(rand_to_sphere(self.radius,distance_squared))
     }
 }
