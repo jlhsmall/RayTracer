@@ -1,7 +1,9 @@
 pub use crate::aabb::AABB;
 pub use crate::object::{HitRecord, Hittable};
 pub use crate::ray::Ray;
+pub use crate::vec3::Vec3;
 pub use std::sync::Arc;
+pub use crate::oneweekend::rand_int;
 pub struct HittableList {
     pub objects: Vec<Arc<dyn Hittable>>,
 }
@@ -40,5 +42,17 @@ impl Hittable for HittableList {
             }
         }
         output_box
+    }
+    fn pdf_value(&self, o: Vec3, v: Vec3) -> f64 {
+        let weight=1.0/(self.objects.len() as f64);
+        let mut sum=0.0;
+        for i in self.objects.iter(){
+            sum+=i.pdf_value(o,v);
+        }
+        sum*weight
+    }
+    fn random(&self, o: Vec3) -> Vec3 {
+        let sz=self.objects.len() as i32;
+        self.objects[rand_int(0,sz-1)as usize].random(o)
     }
 }

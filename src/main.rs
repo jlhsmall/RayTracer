@@ -185,11 +185,11 @@ fn cornell_box() -> Arc<BVHNode> {
         555.0,
         white.clone(),
     )));
-    //let aluminum=Arc::new(Metal::new(Vec3::new(0.8, 0.85, 0.88),0.0));
+    let aluminum=Arc::new(Metal::new(Vec3::new(0.8, 0.85, 0.88),0.0));
     let mut box1: Arc<dyn Hittable> = Arc::new(CBox::new(
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(165.0, 330.0, 165.0),
-        white.clone()//aluminum,
+        aluminum,
     ));
     box1 = Arc::new(RotateY::new(box1, 15.0));
     box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
@@ -292,7 +292,7 @@ fn main() {
     }
     let mut light_obj:Vec<Arc<dyn Hittable>>=Vec::new();
     light_obj.push(Arc::new(XZRect::new(213.0, 343.0, 227.0, 332.0, 554.0,Arc::new(NoMaterial))));
-    light_obj.push(Arc::new(Sphere::new(Vec3::new(190.0, 90.0, 190.0),90.0,Arc::new(NoMaterial))));
+    //light_obj.push(Arc::new(Sphere::new(Vec3::new(190.0, 90.0, 190.0),90.0,Arc::new(NoMaterial))));
     let lights=Arc::new(HittableList::new(light_obj));
     image_height = (image_width as f64 / aspect_ratio) as u32;
     max_depth = 50;
