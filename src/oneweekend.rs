@@ -38,13 +38,13 @@ pub fn rand_in_unit_sphere() -> Vec3 {
     }
     Vec3::new(x, y, z)
 }
-pub fn rand_to_sphere(radius:f64,distance_squared:f64)->Vec3{
-    let r1=rand_double(0.0,1.0);
-    let r2=rand_double(0.0,1.0);
-    let z=1.0+r2*((1.0-radius*radius/distance_squared).sqrt()-1.0);
-    let phi=2.0*PI*r1;
-    let x = phi.cos() * (1.0-z*z).sqrt();
-    let y = phi.sin() * (1.0-z*z).sqrt();
+pub fn rand_to_sphere(radius: f64, distance_squared: f64) -> Vec3 {
+    let r1 = rand_double(0.0, 1.0);
+    let r2 = rand_double(0.0, 1.0);
+    let z = 1.0 + r2 * ((1.0 - radius * radius / distance_squared).sqrt() - 1.0);
+    let phi = 2.0 * PI * r1;
+    let x = phi.cos() * (1.0 - z * z).sqrt();
+    let y = phi.sin() * (1.0 - z * z).sqrt();
     Vec3::new(x, y, z)
 }
 /*  pub fn rand_in_hemisphere(normal: Vec3) -> Vec3 {
