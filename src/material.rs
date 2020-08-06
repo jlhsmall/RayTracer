@@ -1,34 +1,31 @@
 pub use crate::object::HitRecord;
 pub use crate::onb::ONB;
 pub use crate::oneweekend::{
-    rand_cosine_direction, rand_double,
-    /*rand_in_hemisphere,*/ rand_in_unit_sphere, rand_unit_vector,
+    rand_cosine_direction, rand_double, /*rand_in_hemisphere,*/ rand_in_unit_sphere,
+    rand_unit_vector,
 };
 pub use crate::ray::Ray;
 use crate::texture::SolidColor;
 pub use crate::texture::Texture;
 pub use crate::vec3::reflect;
 //pub use crate::vec3::refract;
+pub use crate::pdf::{CosinePDF, PDF};
 pub use crate::vec3::Vec3;
 pub use std::f64::consts::PI;
 pub use std::sync::Arc;
-pub use crate::pdf::{PDF,CosinePDF};
 #[derive(Clone)]
-pub enum ScatterType{
+pub enum ScatterType {
     Specular(Ray),
     Pdf(Arc<dyn PDF>),
 }
 #[derive(Clone)]
 pub struct ScatterRecord {
     pub attenuation: Vec3,
-    pub tp:ScatterType,
+    pub tp: ScatterType,
 }
 impl ScatterRecord {
-    pub fn new(attenuation: Vec3, tp:ScatterType) -> Self {
-        Self {
-            attenuation,
-            tp
-        }
+    pub fn new(attenuation: Vec3, tp: ScatterType) -> Self {
+        Self { attenuation, tp }
     }
 }
 pub trait Material: Send + Sync {
@@ -91,7 +88,10 @@ impl Material for Metal {
         let reflected = reflect(r.dir.unit(), rec.normal);
         Option::Some(ScatterRecord::new(
             self.albedo,
-            ScatterType::Specular(Ray::new(rec.p, reflected + rand_in_unit_sphere() * self.fuzz))
+            ScatterType::Specular(Ray::new(
+                rec.p,
+                reflected + rand_in_unit_sphere() * self.fuzz,
+            )),
         ))
     }
 } /*
