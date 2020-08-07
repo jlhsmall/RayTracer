@@ -219,6 +219,25 @@ fn cornell_box() -> Arc<BVHNode> {
     let span = objects.len();
     Arc::new(BVHNode::new(objects, span, 0.001, INF))
 }
+fn two_spheres() -> Arc<BVHNode> {
+    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let checker = Arc::new(CheckerTexture::new(
+        Vec3::new(0.2, 0.3, 0.1),
+        Vec3::new(0.9, 0.9, 0.9),
+    ));
+    objects.push(Arc::new(Sphere::new(
+        Vec3::new(0.0, -10.0, 0.0),
+        10.0,
+        Arc::new(DiffuseLight::newt(checker.clone())),
+    )));
+    objects.push(Arc::new(Sphere::new(
+        Vec3::new(0.0, 10.0, 0.0),
+        10.0,
+        Arc::new(DiffuseLight::newt(checker)),
+    )));
+    let span = objects.len();
+    Arc::new(BVHNode::new(objects, span, 0.001, INF))
+}
 fn get_text() -> String {
     // GITHUB_SHA is the associated commit ID
     // only available on GitHub Action
@@ -271,7 +290,7 @@ fn main() {
     let max_depth: i32;
     //image
     //world
-    let background = Vec3::new(0.0, 0.0, 0.0);
+    let background: Vec3;
     let world: Arc<BVHNode>;
     //camera
 
@@ -281,8 +300,10 @@ fn main() {
     let vup: Vec3;
     let focus_dist = 10.0;
     let aperture = 0.0;
-    let x = 2;
+    let mut light_obj: Vec<Arc<dyn Hittable>> = Vec::new();
+    let x = 3;
     if x == 0 {
+        background = Vec3::zero();
         world = random_scene();
         aspect_ratio = 3.0 / 2.0;
         lookfrom = Vec3::new(13.0, 2.0, 3.0);
@@ -290,34 +311,53 @@ fn main() {
         vup = Vec3::new(0.0, 1.0, 0.0);
         vfov = 20.0;
     } else if x == 1 {
+        background = Vec3::zero();
         world = simple_light();
         aspect_ratio = 3.0 / 2.0;
         lookfrom = Vec3::new(26.0, 3.0, 6.0);
         lookat = Vec3::new(0.0, 2.0, 0.0);
         vup = Vec3::new(0.0, 1.0, 0.0);
         vfov = 20.0;
-    } else {
+    } else if x == 2 {
+        background = Vec3::zero();
         world = cornell_box();
         aspect_ratio = 1.0;
         lookfrom = Vec3::new(278.0, 278.0, -800.0);
         lookat = Vec3::new(278.0, 278.0, 0.0);
         vup = Vec3::new(0.0, 1.0, 0.0);
         vfov = 40.0;
+        light_obj.push(Arc::new(XZRect::new(
+            213.0,
+            343.0,
+            227.0,
+            332.0,
+            554.0,
+            Arc::new(NoMaterial),
+        )));
+        light_obj.push(Arc::new(Sphere::new(
+            Vec3::new(190.0, 90.0, 190.0),
+            90.0,
+            Arc::new(NoMaterial),
+        )));
+    } else {
+        background = Vec3::new(0.6, 0.8, 0.95);
+        world = two_spheres();
+        aspect_ratio = 3.0 / 2.0;
+        lookfrom = Vec3::new(13.0, 2.0, 3.0);
+        lookat = Vec3::new(0.0, 0.0, 0.0);
+        vup = Vec3::new(0.0, 1.0, 0.0);
+        vfov = 20.0;
+        light_obj.push(Arc::new(Sphere::new(
+            Vec3::new(0.0, -10.0, 0.0),
+            10.0,
+            Arc::new(NoMaterial),
+        )));
+        light_obj.push(Arc::new(Sphere::new(
+            Vec3::new(0.0, 710.0, 0.0),
+            10.0,
+            Arc::new(NoMaterial),
+        )));
     }
-    let mut light_obj: Vec<Arc<dyn Hittable>> = Vec::new();
-    light_obj.push(Arc::new(XZRect::new(
-        213.0,
-        343.0,
-        227.0,
-        332.0,
-        554.0,
-        Arc::new(NoMaterial),
-    )));
-    light_obj.push(Arc::new(Sphere::new(
-        Vec3::new(190.0, 90.0, 190.0),
-        90.0,
-        Arc::new(NoMaterial),
-    )));
     let lights = Arc::new(HittableList::new(light_obj));
     image_height = (image_width as f64 / aspect_ratio) as u32;
     max_depth = 50;

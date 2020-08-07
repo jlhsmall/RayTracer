@@ -151,6 +151,9 @@ impl DiffuseLight {
             emit: Arc::new(SolidColor::new(c)),
         }
     }
+    pub fn newt(emit: Arc<dyn Texture>) -> Self {
+        Self { emit }
+    }
 }
 impl Material for DiffuseLight {
     fn emitted(&self, _r: Ray, rec: HitRecord, u: f64, v: f64, p: Vec3) -> Vec3 {
