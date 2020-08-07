@@ -4,12 +4,12 @@ pub use crate::oneweekend::{
     rand_cosine_direction, rand_double, /*rand_in_hemisphere,*/ rand_in_unit_sphere,
     rand_unit_vector,
 };
+pub use crate::pdf::{CosinePDF, PDF};
 pub use crate::ray::Ray;
 use crate::texture::SolidColor;
 pub use crate::texture::Texture;
 pub use crate::vec3::reflect;
-//pub use crate::vec3::refract;
-pub use crate::pdf::{CosinePDF, PDF};
+pub use crate::vec3::refract;
 pub use crate::vec3::Vec3;
 pub use std::f64::consts::PI;
 pub use std::sync::Arc;
@@ -94,12 +94,12 @@ impl Material for Metal {
             )),
         ))
     }
-} /*
-  fn schlick(cosine: f64, ref_idx: f64) -> f64 {
-      let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
-      r0 = r0 * r0;
-      r0 + (1.0 - r0) * ((1.0 - cosine).powf(5.0))
-  }*/
+}
+fn schlick(cosine: f64, ref_idx: f64) -> f64 {
+    let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+    r0 = r0 * r0;
+    r0 + (1.0 - r0) * ((1.0 - cosine).powf(5.0))
+}
 pub struct Dielectric {
     pub ref_idx: f64,
 }
@@ -109,7 +109,7 @@ impl Dielectric {
     }
 }
 impl Material for Dielectric {
-    /*fn scatter(&self, r: Ray, rec: HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, r: Ray, rec: HitRecord) -> Option<ScatterRecord> {
         let attenuation = Vec3::ones();
         let eta_i_over_t = if rec.front_face {
             1.0 / self.ref_idx
@@ -136,8 +136,11 @@ impl Material for Dielectric {
                 scattered = Ray::new(rec.p, refracted);
             }
         }
-        Option::Some(ScatterRecord::new(attenuation, scattered))
-    }*/
+        Option::Some(ScatterRecord::new(
+            attenuation,
+            ScatterType::Specular(scattered),
+        ))
+    }
 }
 pub struct DiffuseLight {
     pub emit: Arc<dyn Texture>,

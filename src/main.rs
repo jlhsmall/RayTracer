@@ -193,23 +193,29 @@ fn cornell_box() -> Arc<BVHNode> {
         555.0,
         white.clone(),
     )));
-    let aluminum = Arc::new(Metal::new(Vec3::new(0.8, 0.85, 0.88), 0.0));
+    //let aluminum = Arc::new(Metal::new(Vec3::new(0.8, 0.85, 0.88), 0.0));
     let mut box1: Arc<dyn Hittable> = Arc::new(CBox::new(
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(165.0, 330.0, 165.0),
-        aluminum,
+        white, //.clone(),
     ));
     box1 = Arc::new(RotateY::new(box1, 15.0));
     box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
     objects.push(box1);
-    let mut box2: Arc<dyn Hittable> = Arc::new(CBox::new(
+    let glass_sphere = Arc::new(Sphere::new(
+        Vec3::new(190.0, 90.0, 190.0),
+        90.0,
+        Arc::new(Dielectric::new(1.5)),
+    ));
+    objects.push(glass_sphere);
+    /*let mut box2: Arc<dyn Hittable> = Arc::new(CBox::new(
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(165.0, 165.0, 165.0),
         white,
     ));
     box2 = Arc::new(RotateY::new(box2, -18.0));
     box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
-    objects.push(box2);
+    objects.push(box2);*/
     let span = objects.len();
     Arc::new(BVHNode::new(objects, span, 0.001, INF))
 }
@@ -307,7 +313,11 @@ fn main() {
         554.0,
         Arc::new(NoMaterial),
     )));
-    //light_obj.push(Arc::new(Sphere::new(Vec3::new(190.0, 90.0, 190.0),90.0,Arc::new(NoMaterial))));
+    light_obj.push(Arc::new(Sphere::new(
+        Vec3::new(190.0, 90.0, 190.0),
+        90.0,
+        Arc::new(NoMaterial),
+    )));
     let lights = Arc::new(HittableList::new(light_obj));
     image_height = (image_width as f64 / aspect_ratio) as u32;
     max_depth = 50;
@@ -354,6 +364,15 @@ fn main() {
                         );
                     }
                     color /= samples_per_pixel as f64;
+                    if color.x.is_nan() {
+                        color.x = 0.0;
+                    }
+                    if color.y.is_nan() {
+                        color.y = 0.0;
+                    }
+                    if color.z.is_nan() {
+                        color.z = 0.0;
+                    }
                     color = Vec3::new(color.x.sqrt(), color.y.sqrt(), color.z.sqrt()) * 255.0;
                     *pixel = image::Rgb([color.x as u8, color.y as u8, color.z as u8]);
                 }
