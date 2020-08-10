@@ -65,11 +65,10 @@ fn get_color(
             get_color(specular_ray, background, world, lights, depth - 1),
         ),
         ScatterType::Pdf(pdf_ptr) => {
-            let p:Arc<dyn PDF>;
-            if lights.empty(){
-                p=pdf_ptr
-            }
-            else{
+            let p: Arc<dyn PDF>;
+            if lights.empty() {
+                p = pdf_ptr
+            } else {
                 let light_ptr = Arc::new(HittablePDF::new(lights.clone(), rec.p));
                 p = Arc::new(MixturePDF::new(light_ptr, pdf_ptr));
             }

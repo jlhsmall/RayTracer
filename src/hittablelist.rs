@@ -14,7 +14,9 @@ impl HittableList {
     pub fn add(&mut self, x: Arc<dyn Hittable>) {
         self.objects.push(x);
     }
-    pub fn empty(&self)->bool{self.objects.is_empty()}
+    pub fn empty(&self) -> bool {
+        self.objects.is_empty()
+    }
 }
 impl Hittable for HittableList {
     fn hit(&self, r: Ray, tmin: f64, tmax: f64) -> Option<HitRecord> {

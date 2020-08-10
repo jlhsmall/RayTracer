@@ -1,9 +1,9 @@
-pub use crate::oneweekend::{rand_double, rand_int};
+pub use crate::oneweekend::{rand_double, rand_int, rand_vector};
 pub use crate::vec3::Vec3;
 const POINT_COUNT: usize = 256;
 #[derive(Clone)]
 pub struct Perlin {
-    ranfloat: Vec<f64>,
+    ranvec: Vec<Vec3>,
     perm_x: Vec<usize>,
     perm_y: Vec<usize>,
     perm_z: Vec<usize>,
@@ -22,43 +22,61 @@ impl Perlin {
         }
         ret
     }
-    fn perlin_generate_ranfloat() -> Vec<f64> {
-        let mut ret: Vec<f64> = Vec::new();
+    fn perlin_generate_ranvec() -> Vec<Vec3> {
+        let mut ret: Vec<Vec3> = Vec::new();
         for _i in 0..POINT_COUNT {
-            ret.push(rand_double(0.0, 1.0));
+            ret.push(rand_vector(-1.0, 1.0).unit());
         }
         ret
     }
     pub fn new() -> Self {
         Self {
-            ranfloat: Perlin::perlin_generate_ranfloat(),
+            ranvec: Perlin::perlin_generate_ranvec(),
             perm_x: Perlin::perlin_generate_perm(),
             perm_y: Perlin::perlin_generate_perm(),
             perm_z: Perlin::perlin_generate_perm(),
         }
     }
     pub fn noise(&self, p: Vec3) -> f64 {
-        let mut u = p.x - p.x.floor();
-        let mut v = p.y - p.y.floor();
-        let mut w = p.z - p.z.floor();
-        u=u*u*(3.0-2.0*u);
-        v=v*v*(3.0-2.0*v);
-        w=w*w*(3.0-2.0*w);
-        let xx = p.x.floor() as usize;
-        let yy = p.y.floor() as usize;
-        let zz = p.z.floor() as usize;
-        let mut accum=0.0;
-        for di in 0..2{
-            for dj in 0..2{
-                for dk in 0..2{
-                    let c=self.ranfloat[(self.perm_x[((xx+di)&255)as usize]^self.perm_y[((yy+dj)&255)as usize]^self.perm_z[((zz+dk)&255)as usize])as usize];
-                    let ii=di as f64;
-                    let jj=dj as f64;
-                    let kk=dk as f64;
-                    accum+=(ii*u+(1.0-ii)*(1.0-u))*(jj*v+(1.0-jj)*(1.0-v))*(kk*w+(1.0-kk)*(1.0-w))*c;
+        let u = p.x - p.x.floor();
+        let v = p.y - p.y.floor();
+        let w = p.z - p.z.floor();
+        let uu = u * u * (3.0 - 2.0 * u);
+        let vv = v * v * (3.0 - 2.0 * v);
+        let ww = w * w * (3.0 - 2.0 * w);
+        let xx = p.x.floor() as i32;
+        let yy = p.y.floor() as i32;
+        let zz = p.z.floor() as i32;
+        let mut accum = 0.0;
+        for di in 0..2 {
+            for dj in 0..2 {
+                for dk in 0..2 {
+                    let ii = di as f64;
+                    let jj = dj as f64;
+                    let kk = dk as f64;
+                    let weight_v = Vec3::new(u - ii, v - jj, w - kk);
+                    let cc = self.ranvec[(self.perm_x[((xx + di) & 255) as usize]
+                        ^ self.perm_y[((yy + dj) & 255) as usize]
+                        ^ self.perm_z[((zz + dk) & 255) as usize])
+                        as usize];
+                    accum += cc
+                        * weight_v
+                        * (ii * uu + (1.0 - ii) * (1.0 - uu))
+                        * (jj * vv + (1.0 - jj) * (1.0 - vv))
+                        * (kk * ww + (1.0 - kk) * (1.0 - ww));
                 }
             }
         }
         accum
+    }
+    pub fn turb(&self, mut p: Vec3, depth: i32) -> f64 {
+        let mut accum = 0.0;
+        let mut weight = 1.0;
+        for _i in 0..depth {
+            accum += weight * self.noise(p);
+            weight *= 0.5;
+            p *= 2.0;
+        }
+        accum.abs()
     }
 }
