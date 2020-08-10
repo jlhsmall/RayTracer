@@ -38,6 +38,7 @@ pub use std::sync::Arc;
 pub use texture::{CheckerTexture, NoiseTexture};
 use threadpool::ThreadPool;
 pub use vec3::Vec3;
+
 fn get_color(
     r: Ray,
     background: Vec3,
@@ -254,7 +255,7 @@ fn two_perlin_spheres() -> Arc<BVHNode> {
     objects.push(Arc::new(Sphere::new(
         Vec3::new(0.0, 2.0, 0.0),
         2.0,
-        Arc::new(DiffuseLight::newt(pertext)),
+        Arc::new(Lamertian::newa(pertext)),
     )));
     let span = objects.len();
     Arc::new(BVHNode::new(objects, span, 0.001, INF))
