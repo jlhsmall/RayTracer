@@ -11,6 +11,7 @@ mod object;
 mod onb;
 mod oneweekend;
 mod pdf;
+mod perlin;
 mod ray;
 mod sphere;
 mod texture;
@@ -34,15 +35,14 @@ use rusttype::Font;
 pub use sphere::Sphere;
 use std::sync::mpsc::channel;
 pub use std::sync::Arc;
-pub use texture::CheckerTexture;
+pub use texture::{CheckerTexture, NoiseTexture};
 use threadpool::ThreadPool;
 pub use vec3::Vec3;
-
 fn get_color(
     r: Ray,
     background: Vec3,
     world: Arc<BVHNode>,
-    lights: Arc<dyn Hittable>,
+    lights: Arc<HittableList>,
     depth: i32,
 ) -> Vec3 {
     if depth <= 0 {
@@ -65,8 +65,14 @@ fn get_color(
             get_color(specular_ray, background, world, lights, depth - 1),
         ),
         ScatterType::Pdf(pdf_ptr) => {
-            let light_ptr = Arc::new(HittablePDF::new(lights.clone(), rec.p));
-            let p = MixturePDF::new(light_ptr, pdf_ptr);
+            let p:Arc<dyn PDF>;
+            if lights.empty(){
+                p=pdf_ptr
+            }
+            else{
+                let light_ptr = Arc::new(HittablePDF::new(lights.clone(), rec.p));
+                p = Arc::new(MixturePDF::new(light_ptr, pdf_ptr));
+            }
             let scattered = Ray::new(rec.p, p.generate());
             let pdf_val = p.value(scattered.dir);
             emitted
@@ -238,6 +244,22 @@ fn two_spheres() -> Arc<BVHNode> {
     let span = objects.len();
     Arc::new(BVHNode::new(objects, span, 0.001, INF))
 }
+fn two_perlin_spheres() -> Arc<BVHNode> {
+    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let pertext = Arc::new(NoiseTexture::new(4.0));
+    objects.push(Arc::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Arc::new(Lamertian::newa(pertext.clone())),
+    )));
+    objects.push(Arc::new(Sphere::new(
+        Vec3::new(0.0, 2.0, 0.0),
+        2.0,
+        Arc::new(DiffuseLight::newt(pertext)),
+    )));
+    let span = objects.len();
+    Arc::new(BVHNode::new(objects, span, 0.001, INF))
+}
 fn get_text() -> String {
     // GITHUB_SHA is the associated commit ID
     // only available on GitHub Action
@@ -301,7 +323,7 @@ fn main() {
     let focus_dist = 10.0;
     let aperture = 0.0;
     let mut light_obj: Vec<Arc<dyn Hittable>> = Vec::new();
-    let x = 3;
+    let x = 4;
     if x == 0 {
         background = Vec3::zero();
         world = random_scene();
@@ -339,7 +361,7 @@ fn main() {
             90.0,
             Arc::new(NoMaterial),
         )));
-    } else {
+    } else if x == 3 {
         background = Vec3::new(0.6, 0.8, 0.95);
         world = two_spheres();
         aspect_ratio = 3.0 / 2.0;
@@ -353,10 +375,18 @@ fn main() {
             Arc::new(NoMaterial),
         )));
         light_obj.push(Arc::new(Sphere::new(
-            Vec3::new(0.0, 710.0, 0.0),
+            Vec3::new(0.0, 10.0, 0.0),
             10.0,
             Arc::new(NoMaterial),
         )));
+    } else {
+        background = Vec3::new(0.6, 0.8, 0.95);
+        world = two_perlin_spheres();
+        aspect_ratio = 3.0 / 2.0;
+        lookfrom = Vec3::new(13.0, 2.0, 3.0);
+        lookat = Vec3::new(0.0, 0.0, 0.0);
+        vup = Vec3::new(0.0, 1.0, 0.0);
+        vfov = 20.0;
     }
     let lights = Arc::new(HittableList::new(light_obj));
     image_height = (image_width as f64 / aspect_ratio) as u32;
